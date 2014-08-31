@@ -1,0 +1,9 @@
+bin/*
+pkg/*
+data/*.go
+pages/*
+log.txt
+*.lock
+*.pid
+*.tmp
+__*
