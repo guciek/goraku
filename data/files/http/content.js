@@ -299,8 +299,8 @@
             p.appendChild(b);
             return p;
         }
-        function loginFailedMsg() {
-            var e = div("Login failed");
+        function loginFailedMsg(msg) {
+            var e = div(msg ? msg : "Login failed");
             e.className = "jswarning";
             $("leftcolumn").appendChild(e);
             setTimeout(function () {
@@ -312,9 +312,9 @@
             postRequest(
                 "/login",
                 u + ":" + p,
-                function (d) {
+                function (d, err) {
                     if ((d !== "OK") && (d !== "ADMIN")) {
-                        loginFailedMsg();
+                        loginFailedMsg(err);
                         reactivate();
                         user.value = "";
                         pass.value = "";
@@ -503,8 +503,10 @@
     }
 
     try {
-        initContent();
-        initTreeMenu();
+        if (onDbChanged) {
+            initContent();
+            initTreeMenu();
+        }
     } catch (err) {
         error(err);
     }

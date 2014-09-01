@@ -1085,8 +1085,210 @@
         dbChanged();
     }
 
+    function textEditor_insertImage_onFile(append_html, pid, inp, onerror) {
+        if (inp.files.length < 1) { return; }
+        var fr, fname, fext = "", maxsize = 1024 * 1024;
+        try {
+            fr = new FileReader();
+        } catch (err) {
+            onerror("Your browser does not support the FileReader interface");
+            return;
+        }
+        fname = String(inp.files[0].name).toLowerCase();
+        if (fname.match(/\.(jpg|jpeg)$/)) {
+            fext = "jpg";
+        }
+        if (fname.match(/\.png$/)) {
+            fext = "png";
+        }
+        if (fext.length < 1) {
+            onerror("Only JPG and PNG files are supported");
+            return;
+        }
+        if (inp.files[0].size > maxsize) {
+            onerror("File is too large");
+            return;
+        }
+        fr.onload = function (ev) {
+            var fn, n = 1, p, data = String(ev.target.result);
+            if (data.length < 1) { return; }
+            if (data.length > maxsize) {
+                onerror("File is too large");
+                return;
+            }
+            p = db.page(pid);
+            if (!p) {
+                onerror("Page not found");
+                return;
+            }
+            fn = "img_" + n + "." + fext;
+            while (p.hasFile(fn)) {
+                n = n + 1;
+                fn = "img_" + n + "." + fext;
+            }
+            p.writeFile(fn, data, "binary", function (err) {
+                onerror(err);
+                if (err) { return; }
+                append_html('<p><img src="/' + fn + '" /></p>');
+            });
+        };
+        fr.readAsBinaryString(inp.files[0]);
+    }
+
+    function textEditor_insertImage(append_html, pid) {
+        var popup = div(), inp = input_text(), msg = div();
+        popup.appendChild(inp);
+        popup.appendChild(msg);
+        inp.type = "file";
+        inp.style.width = "250px";
+        inp.style.padding = "0";
+        inp.style.border = "0";
+        inp.style.background = "transparent";
+        inp.onchange = function () {
+            textEditor_insertImage_onFile(append_html, pid, inp, function (err) {
+                if (err) {
+                    msg.textContent = "Error: " + err;
+                    msg.style.marginTop = "10px";
+                    msg.style.color = "#f00";
+                } else {
+                    popup.close_window();
+                }
+            });
+        };
+        return popup;
+    }
+
+    function textEditor_insertLinkToPage(append_html) {
+        var popup = div(), select = document.createElement("select");
+        popup.appendChild(select);
+        select.style.width = "250px";
+        function addopt(val) {
+            var opt = document.createElement("option");
+            opt.value = val;
+            opt.text = val;
+            select.appendChild(opt);
+        }
+        addopt("");
+        db.forEachPage(function (p) {
+            p.forEachProp(function (pname) {
+                if (pname.substring(0, 6) === "title_") {
+                    pname = pname.substring(6);
+                    addopt("/" + p.id() + "/" + pname);
+                }
+            });
+        });
+        popup.appendChild(windowSaveBtn("Add", function (showerror) {
+            var l = select.value;
+            if (l.charAt(0) !== "/") {
+                showerror("Choose an option");
+                return;
+            }
+            append_html('<p><a href="' + l + '">' + l + '</a></p>');
+            popup.close_window();
+        }));
+        return popup;
+    }
+
+    function textEditor_insertLinkToURL(append_html) {
+        var popup = div(), inp, btn;
+        btn = windowSaveBtn("Add", function (showerror) {
+            var l = inp.value;
+            if ((l.substring(0, 7) !== "http://") &&
+                    (l.substring(0, 8) !== "https://")) {
+                showerror("Invalid link");
+                return;
+            }
+            append_html('<p><a href="' + l + '">' + l + '</a></p>');
+            popup.close_window();
+        });
+        inp = input_text(btn.getElementsByTagName("input")[0].onclick);
+        inp.value = "http://";
+        inp.style.width = "250px";
+        popup.appendChild(inp);
+        popup.appendChild(btn);
+        return popup;
+    }
+
+    function textEditor_buttons(append_html, pid, openPopupWindow) {
+        function btn(text, cmd, par) {
+            var l = link(text, function () {
+                try {
+                    if ((cmd !== "formatBlock") && (cmd !== "removeFormat")) {
+                        document.execCommand("removeFormat", false, false);
+                    }
+                    document.execCommand(cmd, false, par);
+                } catch (ignore) {}
+            });
+            l.onmousedown = function (ev) {
+                if (ev) { ev.preventDefault(); }
+                return false;
+            };
+            return l;
+        }
+        var panel = div(), line = div();
+        line.appendChild(span("Paragraph: "));
+        line.appendChild(btn(" regular ", "formatBlock", "p"));
+        line.appendChild(span(" | "));
+        line.appendChild(btn(" code ", "formatBlock", "pre"));
+        line.appendChild(span(" | "));
+        line.appendChild(btn(" header ", "formatBlock", "h1"));
+        line.appendChild(span(" | "));
+        line.appendChild(btn(" subheader ", "formatBlock", "h2"));
+        line.style.marginBottom = "10px";
+        panel.appendChild(line);
+        line = div();
+        line.appendChild(span("Text style: "));
+        line.appendChild(btn(" regular ", "removeFormat", false));
+        line.appendChild(span(" | "));
+        line.appendChild(btn(" bold ", "bold", false));
+        line.appendChild(span(" | "));
+        line.appendChild(btn(" italic ", "italic", false));
+        line.appendChild(span(" | "));
+        line.appendChild(btn(" superscript ", "superscript", false));
+        line.style.marginBottom = "10px";
+        panel.appendChild(line);
+        line = div();
+        line.appendChild(span("Insert: "));
+        line.appendChild(link(" image ", function () {
+            openPopupWindow(
+                "Insert image",
+                textEditor_insertImage(append_html, pid)
+            );
+        }));
+        line.appendChild(span(" | "));
+        line.appendChild(link(" link to page ", function () {
+            openPopupWindow(
+                "Insert link to page",
+                textEditor_insertLinkToPage(append_html)
+            );
+        }));
+        line.appendChild(span(" | "));
+        line.appendChild(link(" link to url ", function () {
+            openPopupWindow(
+                "Insert link to URL",
+                textEditor_insertLinkToURL(append_html)
+            );
+        }));
+        line.style.marginBottom = "10px";
+        panel.appendChild(line);
+        return panel;
+    }
+
     function showEditContent_dataLoaded(pid, lang, e, initContent) {
-        var editable = div();
+        var editable = div(), openPopupWindow;
+        (function () {
+            var popups = makeSet();
+            openPopupWindow = function (title, content) {
+                makeWindow(content, title);
+                popups.add(content);
+                content.onclose = function () {
+                    popups.remove(content);
+                };
+            };
+            e.onclose = function () {
+                popups.forEach(function (p) { p.close_window(); });
+            };
+        }());
         function getCleanHtml(append) {
             var h = editable.innerHTML, imgs, i;
             if (append) {
@@ -1107,181 +1309,7 @@
             }
             return h;
         }
-        function img_onFileInput(inp, onerror) {
-            if (inp.files.length < 1) { return; }
-            var fr, fname, fext = "", maxsize = 1024 * 1024;
-            try {
-                fr = new FileReader();
-            } catch (err) {
-                onerror("Your browser does not support the FileReader interface");
-                return;
-            }
-            fname = String(inp.files[0].name).toLowerCase();
-            if (fname.match(/\.(jpg|jpeg)$/)) {
-                fext = "jpg";
-            }
-            if (fname.match(/\.png$/)) {
-                fext = "png";
-            }
-            if (fext.length < 1) {
-                onerror("Only JPG and PNG files are supported");
-                return;
-            }
-            if (inp.files[0].size > maxsize) {
-                onerror("File is too large");
-                return;
-            }
-            fr.onload = function (ev) {
-                var fn, n = 1, p, data = String(ev.target.result);
-                if (data.length < 1) { return; }
-                if (data.length > maxsize) {
-                    onerror("File is too large");
-                    return;
-                }
-                p = db.page(pid);
-                if (!p) {
-                    onerror("Page not found");
-                    return;
-                }
-                fn = "img_" + n + "." + fext;
-                while (p.hasFile(fn)) {
-                    n = n + 1;
-                    fn = "img_" + n + "." + fext;
-                }
-                p.writeFile(fn, data, "binary", function (err) {
-                    onerror(err);
-                    if (err) { return; }
-                    getCleanHtml('<p><img src="/' + fn + '" /></p>');
-                });
-            };
-            fr.readAsBinaryString(inp.files[0]);
-        }
-        function on_btn_img() {
-            var popup = div(), inp = input_text(), msg = div();
-            popup.appendChild(inp);
-            popup.appendChild(msg);
-            inp.type = "file";
-            inp.style.width = "250px";
-            inp.style.padding = "0";
-            inp.style.border = "0";
-            inp.style.background = "transparent";
-            inp.onchange = function () {
-                img_onFileInput(inp, function (err) {
-                    if (err) {
-                        msg.textContent = "Error: " + err;
-                        msg.style.marginTop = "10px";
-                        msg.style.color = "#f00";
-                    } else {
-                        popup.close_window();
-                    }
-                });
-            };
-            makeWindow(popup, "Insert file: " + pid + " / " + lang);
-        }
-        function on_btn_link_url() {
-            var popup = div(), inp;
-            function copyOncl(btn) {
-                var oncl = btn.getElementsByTagName("input")[0].onclick;
-                inp = input_text(oncl);
-                popup.appendChild(inp);
-                inp.value = "http://";
-                inp.style.width = "250px";
-                return btn;
-            }
-            popup.appendChild(copyOncl(windowSaveBtn("Add", function (showerror) {
-                var l = inp.value;
-                if ((l.substring(0, 7) !== "http://") &&
-                        (l.substring(0, 8) !== "https://")) {
-                    showerror("Invalid link");
-                    return;
-                }
-                getCleanHtml('<p><a href="' + l + '">' + l + '</a></p>');
-                popup.close_window();
-            })));
-            makeWindow(popup, "Insert link: " + pid + " / " + lang);
-        }
-        function on_btn_link_page() {
-            var popup = div(), select = document.createElement("select");
-            popup.appendChild(select);
-            select.style.width = "250px";
-            function addopt(val) {
-                var opt = document.createElement("option");
-                opt.value = val;
-                opt.text = val;
-                select.appendChild(opt);
-            }
-            addopt("");
-            db.forEachPage(function (p) {
-                p.forEachProp(function (pname) {
-                    if (pname.substring(0, 6) === "title_") {
-                        pname = pname.substring(6);
-                        addopt("/" + p.id() + "/" + pname);
-                    }
-                });
-            });
-            popup.appendChild(windowSaveBtn("Add", function (showerror) {
-                var l = select.value;
-                if (l.charAt(0) !== "/") {
-                    showerror("Invalid link");
-                    return;
-                }
-                getCleanHtml('<p><a href="' + l + '">' + l + '</a></p>');
-                popup.close_window();
-            }));
-            makeWindow(popup, "Insert link: " + pid + " / " + lang);
-        }
-        function btn(text, cmd, par) {
-            var l = link(text, function () {
-                try {
-                    if ((cmd !== "formatBlock") && (cmd !== "removeFormat")) {
-                        document.execCommand("removeFormat", false, false);
-                    }
-                    document.execCommand(cmd, false, par);
-                    if (cmd === "formatBlock") {
-                        getCleanHtml();
-                    }
-                } catch (ignore) {}
-            });
-            l.onmousedown = function (ev) {
-                if (ev) { ev.preventDefault(); }
-                return false;
-            };
-            return l;
-        }
-        function buttonBar() {
-            var btns = div();
-            btns.appendChild(span("Paragraph: "));
-            btns.appendChild(btn(" regular ", "formatBlock", "p"));
-            btns.appendChild(span(" | "));
-            btns.appendChild(btn(" code ", "formatBlock", "pre"));
-            btns.appendChild(span(" | "));
-            btns.appendChild(btn(" header ", "formatBlock", "h1"));
-            btns.appendChild(span(" | "));
-            btns.appendChild(btn(" subheader ", "formatBlock", "h2"));
-            btns.style.marginBottom = "10px";
-            e.appendChild(btns);
-            btns = div();
-            btns.appendChild(span("Text style: "));
-            btns.appendChild(btn(" regular ", "removeFormat", false));
-            btns.appendChild(span(" | "));
-            btns.appendChild(btn(" bold ", "bold", false));
-            btns.appendChild(span(" | "));
-            btns.appendChild(btn(" italic ", "italic", false));
-            btns.appendChild(span(" | "));
-            btns.appendChild(btn(" superscript ", "superscript", false));
-            btns.style.marginBottom = "10px";
-            e.appendChild(btns);
-            btns = div();
-            btns.appendChild(span("Insert: "));
-            btns.appendChild(link(" image ", on_btn_img));
-            btns.appendChild(span(" | "));
-            btns.appendChild(link(" link to page ", on_btn_link_page));
-            btns.appendChild(span(" | "));
-            btns.appendChild(link(" link to url ", on_btn_link_url));
-            btns.style.marginBottom = "10px";
-            e.appendChild(btns);
-        }
-        buttonBar();
+        e.appendChild(textEditor_buttons(getCleanHtml, pid, openPopupWindow));
         e.appendChild(editable);
         editable.style.overflowX = "hidden";
         editable.style.overflowY = "scroll";

@@ -267,9 +267,9 @@ Array.prototype.forEach = function (f) {
     }
 
     try {
+        dbLoadStart();
         onDbChanged = makeEvent();
         onPageChanged = makeEvent();
-        dbLoadStart();
     } catch (err) {
         error(err);
     }
