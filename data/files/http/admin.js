@@ -87,6 +87,99 @@
         return arr;
     }
 
+    function input_text(action) {
+        var e = document.createElement("input");
+        e.type = "text";
+        if (action) {
+            e.onkeypress = function (ev) {
+                ev = ev || window.event;
+                var c = ev.which || ev.keyCode;
+                if (c !== 13) { return true; }
+                try {
+                    action();
+                } catch (err) {
+                    error(err);
+                }
+                if (ev) { ev.preventDefault(); }
+                return false;
+            };
+        }
+        return e;
+    }
+
+    function input_submit(tit, action) {
+        var active = true, e = document.createElement("input");
+        e.type = "submit";
+        e.value = String(tit);
+        e.style.cursor = "pointer";
+        e.onclick = function (ev) {
+            try {
+                if (active) {
+                    active = false;
+                    e.style.cursor = "default";
+                    try { e.style.opacity = 0.5; } catch (ignore) {}
+                    action(function () {
+                        active = true;
+                        e.style.cursor = "pointer";
+                        try { e.style.opacity = 1; } catch (ignore) {}
+                    });
+                }
+            } catch (err) {
+                error(err);
+            }
+            if (ev) { ev.preventDefault(); }
+            return false;
+        };
+        return e;
+    }
+
+    function span(content) {
+        var e = document.createElement("span");
+        if (content) {
+            if (typeof content === "object") {
+                e.appendChild(content);
+            } else {
+                e.textContent = String(content);
+            }
+        }
+        return e;
+    }
+
+    function link(tit, action) {
+        var e = span(tit);
+        e.style.color = "#005";
+        e.onmouseout = function () {
+            e.style.color = "#005";
+        };
+        e.onmouseover = function () {
+            e.style.color = "#55a";
+        };
+        e.onclick = function (ev) {
+            try {
+                action();
+            } catch (err) {
+                error(err);
+            }
+            if (ev) { ev.preventDefault(); }
+            return false;
+        };
+        e.style.cursor = "pointer";
+        return e;
+    }
+
+    function sanitize_id(s) {
+        var i, c, ret = "";
+        s = String(s);
+        for (i = 0; i < s.length; i += 1) {
+            c = s.charCodeAt(i);
+            if (((c >= 97) && (c <= 122)) || ((c >= 48) && (c <= 57)) ||
+                    (c === 95)) {
+                ret += String.fromCharCode(c);
+            }
+        }
+        return ret;
+    }
+
     function cleanHtml(inputHtml, imgBase) {
         var writeText, writeWhitespace, block, inline;
         function tagWriter(write, inner) {
@@ -147,7 +240,9 @@
             }
             block.want("p");
             inline.want("");
+            writeWhitespace(" ");
             writeText('<img src="' + src + '" />');
+            writeWhitespace(" ");
         }
         function ontag(originaltag) {
             var tag = originaltag.trim().toLowerCase();
@@ -191,9 +286,6 @@
             }
             if (tag === "sup") {
                 inline.want("sup");
-            }
-            if ((tag.substring(0, 4) === "font") || (tag === "code")) {
-                inline.want("code");
             }
             if (tag === "a") {
                 ontag_a(originaltag);
@@ -388,93 +480,6 @@
             }
         }
         return e;
-    }
-
-    function input(action) {
-        var e = document.createElement("input");
-        e.type = "text";
-        if (action) {
-            e.onkeypress = function (ev) {
-                ev = ev || window.event;
-                var c = ev.which || ev.keyCode;
-                if (c !== 13) { return true; }
-                try {
-                    action();
-                } catch (err) {
-                    error(err);
-                }
-                return false;
-            };
-        }
-        return e;
-    }
-
-    function input_submit(tit, action) {
-        var active = true, e = document.createElement("input");
-        e.type = "submit";
-        e.value = String(tit);
-        e.style.cursor = "pointer";
-        e.onclick = function () {
-            try {
-                if (!active) { return; }
-                active = false;
-                e.style.cursor = "default";
-                e.style.opacity = 0.5;
-                action(function () {
-                    active = true;
-                    e.style.cursor = "pointer";
-                    e.style.opacity = 1;
-                });
-            } catch (err) {
-                error(err);
-            }
-        };
-        return e;
-    }
-
-    function span(content) {
-        var e = document.createElement("span");
-        if (content) {
-            if (typeof content === "object") {
-                e.appendChild(content);
-            } else {
-                e.textContent = String(content);
-            }
-        }
-        return e;
-    }
-
-    function link(tit, action) {
-        var e = span(tit);
-        e.style.color = "#005";
-        e.onmouseout = function () {
-            e.style.color = "#005";
-        };
-        e.onmouseover = function () {
-            e.style.color = "#55a";
-        };
-        e.onclick = function () {
-            try {
-                action();
-            } catch (err) {
-                error(err);
-            }
-        };
-        e.style.cursor = "pointer";
-        return e;
-    }
-
-    function sanitize_id(s) {
-        var i, c, ret = "";
-        s = String(s);
-        for (i = 0; i < s.length; i += 1) {
-            c = s.charCodeAt(i);
-            if (((c >= 97) && (c <= 122)) || ((c >= 48) && (c <= 57)) ||
-                    (c === 95)) {
-                ret += String.fromCharCode(c);
-            }
-        }
-        return ret;
     }
 
     makeWindow = (function () {
@@ -980,7 +985,7 @@
     }
 
     function showPageIcon(pid) {
-        var e = div(), canvas, inp = input(), draw,
+        var e = div(), canvas, inp = input_text(), draw,
             icon_w = 145, icon_h = 110, empty = true;
         canvas = document.createElement("canvas");
         draw = canvas.getContext('2d');
@@ -1088,7 +1093,7 @@
                 h += append;
             }
             h = cleanHtml(h, "/file/" + pid + "/");
-            editable.innerHTML = h;
+            editable.innerHTML = (h.length > 0) ? h : "<p></p>";
             imgs = editable.getElementsByTagName("img");
             for (i = 0; i < imgs.length; i = i + 1) {
                 imgs[i].contentEditable = false;
@@ -1101,17 +1106,6 @@
                 imgs[i].style.border = "1px solid black";
             }
             return h;
-        }
-        function btn(text, cmd, par) {
-            var l = link(text, function () {
-                try {
-                    document.execCommand(cmd, false, par);
-                } catch (ignore) {}
-                getCleanHtml();
-            });
-            l.onmousedown = l.onclick;
-            l.onclick = undefined;
-            return l;
         }
         function img_onFileInput(inp, onerror) {
             if (inp.files.length < 1) { return; }
@@ -1163,7 +1157,7 @@
             fr.readAsBinaryString(inp.files[0]);
         }
         function on_btn_img() {
-            var popup = div(), inp = input(), msg = div();
+            var popup = div(), inp = input_text(), msg = div();
             popup.appendChild(inp);
             popup.appendChild(msg);
             inp.type = "file";
@@ -1188,7 +1182,7 @@
             var popup = div(), inp;
             function copyOncl(btn) {
                 var oncl = btn.getElementsByTagName("input")[0].onclick;
-                inp = input(oncl);
+                inp = input_text(oncl);
                 popup.appendChild(inp);
                 inp.value = "http://";
                 inp.style.width = "250px";
@@ -1236,6 +1230,24 @@
             }));
             makeWindow(popup, "Insert link: " + pid + " / " + lang);
         }
+        function btn(text, cmd, par) {
+            var l = link(text, function () {
+                try {
+                    if ((cmd !== "formatBlock") && (cmd !== "removeFormat")) {
+                        document.execCommand("removeFormat", false, false);
+                    }
+                    document.execCommand(cmd, false, par);
+                    if (cmd === "formatBlock") {
+                        getCleanHtml();
+                    }
+                } catch (ignore) {}
+            });
+            l.onmousedown = function (ev) {
+                if (ev) { ev.preventDefault(); }
+                return false;
+            };
+            return l;
+        }
         function buttonBar() {
             var btns = div();
             btns.appendChild(span("Paragraph: "));
@@ -1255,8 +1267,6 @@
             btns.appendChild(btn(" bold ", "bold", false));
             btns.appendChild(span(" | "));
             btns.appendChild(btn(" italic ", "italic", false));
-            btns.appendChild(span(" | "));
-            btns.appendChild(btn(" code ", "fontName", "code"));
             btns.appendChild(span(" | "));
             btns.appendChild(btn(" superscript ", "superscript", false));
             btns.style.marginBottom = "10px";
@@ -1415,11 +1425,11 @@
             d.style.marginRight = "20px";
             return d;
         }
-        function propEdit(propid, submit) {
+        function propEdit(propid, onsubmit) {
             var d = div(), inp;
             d.appendChild(cap(fieldTitles[propid] + ":"));
             d.style.marginBottom = "10px";
-            inp = input(submit);
+            inp = input_text(onsubmit);
             (function () {
                 if (!pid) { return; }
                 var p = db.page(pid);

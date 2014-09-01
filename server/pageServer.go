@@ -47,15 +47,12 @@ func pageServer(logger log.Logger) (Server, error) {
 			if perm.IsAdmin() && strings.HasPrefix(r.Path, "/admin/") {
 				defer pm.DropWriteLock()
 				if !pm.HasWriteLock() { reloadPm(true) }
-				logger.Message("Admin request: '%s' (%s)",
-					r.Path, r.Headers["cookie"])
 				response = respondAdmin(r, perm, pm)
 			} else {
 				pm.DropWriteLock()
 				if time.Now().Sub(pm_reloaded) > time.Hour {
 					reloadPm(false)
 				}
-				logger.Message("Request: '%s'", r.Path)
 				response = respond(r, perm, pm)
 			}
 			perm.NewHeaders(func(k, v string) {

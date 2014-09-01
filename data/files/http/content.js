@@ -8,9 +8,15 @@
         return document.getElementById(id);
     }
 
-    function div(text) {
+    function div(content) {
         var e = document.createElement("div");
-        if (text) { e.textContent = text; }
+        if (content) {
+            if (typeof content === "object") {
+                e.appendChild(content);
+            } else {
+                e.textContent = String(content);
+            }
+        }
         return e;
     }
 
@@ -32,7 +38,7 @@
         return e;
     }
 
-    function input(action) {
+    function input_text(action) {
         var e = document.createElement("input");
         e.type = "text";
         if (action) {
@@ -45,39 +51,51 @@
                 } catch (err) {
                     error(err);
                 }
+                if (ev) { ev.preventDefault(); }
                 return false;
             };
         }
         return e;
     }
 
-    function btn(e, action) {
-        if (typeof e !== "object") {
-            var tit = String(e);
-            e = document.createElement("input");
-            e.type = "submit";
-            e.value = tit;
-        }
-        e.onclick = function () {
+    function input_submit(tit, action) {
+        var active = true, e = document.createElement("input");
+        e.type = "submit";
+        e.value = String(tit);
+        e.style.cursor = "pointer";
+        e.onclick = function (ev) {
+            try {
+                if (active) {
+                    active = false;
+                    e.style.cursor = "default";
+                    try { e.style.opacity = 0.5; } catch (ignore) {}
+                    action(function () {
+                        active = true;
+                        e.style.cursor = "pointer";
+                        try { e.style.opacity = 1; } catch (ignore) {}
+                    });
+                }
+            } catch (err) {
+                error(err);
+            }
+            if (ev) { ev.preventDefault(); }
+            return false;
+        };
+        return e;
+    }
+
+    function clickable(e, action) {
+        e.onclick = function (ev) {
             try {
                 action();
             } catch (err) {
                 error(err);
             }
+            if (ev) { ev.preventDefault(); }
+            return false;
         };
         e.style.cursor = "pointer";
         return e;
-    }
-
-    function elementChildNodes(e) {
-        var i, nodes, array = [];
-        if (!e) { return; }
-        nodes = e.childNodes;
-        if (!nodes) { return; }
-        for (i = 0; i < nodes.length; i += 1) {
-            if (nodes[i].nodeType === 1) { array.push(nodes[i]); }
-        }
-        return array;
     }
 
     function animateHeightUnfold(e) {
@@ -176,7 +194,7 @@
                 }, orderFunc);
                 e = div(p.prop("title_" + lang));
                 subs.style.display = "none";
-                btn(e, function () {
+                clickable(e, function () {
                     if (selected === e) {
                         if (String(subs.style.display) !== "none") {
                             subs.style.display = "none";
@@ -238,8 +256,36 @@
         });
     }
 
+    function upgradeLink(db, a) {
+        function markInvalid(a) {
+            a.style.background = "#f00";
+            a.onclick = function (ev) {
+                if (ev) { ev.preventDefault(); }
+                return false;
+            };
+        }
+        var linkedpage, href = String(a.getAttribute("href"));
+        if (href.charAt(0) !== "/") {
+            a.target = "_blank";
+            return;
+        }
+        href = href.substring(1).split("/");
+        if (href.length !== 2) { markInvalid(a);  return; }
+        linkedpage = db.page(href[0]);
+        if (!linkedpage) { markInvalid(a);  return; }
+        if (linkedpage.prop("title_" + href[1]).length < 1) {
+            markInvalid(a);
+            return;
+        }
+        a.onclick = function (ev) {
+            onPageChanged.fire(href[0] + "/" + href[1]);
+            if (ev) { ev.preventDefault(); }
+            return false;
+        };
+    }
+
     function addContentLoginForm() {
-        var user, pass, submit, submitActive = true;
+        var user, pass, submit;
         $("title").textContent = "Login";
         if (loggedUser) {
             $("article").appendChild(
@@ -261,10 +307,7 @@
                 animateFadeRemove(e);
             }, 3000);
         }
-        function onsubmit() {
-            if (!submitActive) { return; }
-            submitActive = false;
-            submit.disabled = !submitActive;
+        submit = input_submit("Login", function (reactivate) {
             var u = user.value, p = pass.value;
             postRequest(
                 "/login",
@@ -272,8 +315,7 @@
                 function (d) {
                     if ((d !== "OK") && (d !== "ADMIN")) {
                         loginFailedMsg();
-                        submitActive = true;
-                        submit.disabled = !submitActive;
+                        reactivate();
                         user.value = "";
                         pass.value = "";
                         return;
@@ -290,50 +332,25 @@
                     }
                 }
             );
-        }
-        user = input(onsubmit);
+        });
+        user = input_text(submit.onclick);
         user.style.width = "40%";
-        pass = input(onsubmit);
+        pass = input_text(submit.onclick);
         pass.type = "password";
         pass.style.width = "40%";
-        submit = btn("Login", onsubmit);
         $("article").appendChild(btnlabel(user, "User"));
         $("article").appendChild(btnlabel(pass, "Password"));
         $("article").appendChild(para(submit));
     }
 
-    function addContentPage(db, p, lang) {
-        var tit = p.prop("title_" + lang);
+    function addContentPage(db, pid, lang) {
+        var p = db.page(pid), tit;
+        tit = p.prop("title_" + lang);
         if (!tit) { return; }
-        function fixLink(a) {
-            function markInvalid(a) {
-                a.style.background = "#f00";
-            }
-            var linkedpage, href = String(a.getAttribute("href"));
-            if ((href.substring(0, 7) === "http://") ||
-                    (href.substring(0, 8) === "https://")) {
-                a.target = "_blank";
-                return;
-            }
-            a.href = "#";
-            if (href.charAt(0) !== "/") { markInvalid(a);  return; }
-            href = href.substring(1).split("/");
-            if (href.length !== 2) { markInvalid(a);  return; }
-            linkedpage = db.page(href[0]);
-            if (!linkedpage) { markInvalid(a);  return; }
-            if (linkedpage.prop("title_" + href[1]).length < 1) {
-                markInvalid(a);
-                return;
-            }
-            a.onclick = function () {
-                onPageChanged.fire(href[0] + "/" + href[1]);
-                return false;
-            };
-        }
         function fixLinks(elem) {
             var i, links = elem.getElementsByTagName("a");
             for (i = 0; i < links.length; i += 1) {
-                fixLink(links[i]);
+                upgradeLink(db, links[i]);
             }
         }
         $("title").textContent = tit;
@@ -354,10 +371,11 @@
             if (ctit.length < 1) { return; }
             li = document.createElement("li");
             a = document.createElement("a");
-            a.href = "#";
+            a.href = "/" + id + "/" + lang;
             li.appendChild(a);
-            a.onclick = function () {
+            a.onclick = function (ev) {
                 onPageChanged.fire(id + "/" + lang);
+                if (ev) { ev.preventDefault(); }
                 return false;
             };
             if (c.hasFile("icon.jpg")) {
@@ -370,38 +388,48 @@
         }, function (c) { return c.prop("title_" + lang); });
     }
 
-    function initContent() {
-        var db, curPath = "";
-        function update() {
-            var p, path;
-            $("title").textContent = "";
-            $("article").textContent = "";
-            $("subs").textContent = "";
-            if (!db) { return; }
-            if (curPath.length < 1) { return; }
-            if (curPath === "login") {
-                addContentLoginForm();
-            } else {
-                path = curPath.split("/");
-                if (path.length !== 2) { return; }
-                p = db.page(path[0]);
-                if (!p) { return; }
-                addContentPage(db, p, path[1]);
-                document.body.className = "lang_" + path[1];
-            }
-            window.document.title = $("title").textContent;
+    function addContent(db, path) {
+        if (!db) { return; }
+        if (!path) { return; }
+        $("title").style.display = (path.substring(0, 6) === "index/") ?
+                "none" : "block";
+        $("title").textContent = "";
+        $("article").textContent = "";
+        $("subs").textContent = "";
+        if (path === "login") {
+            addContentLoginForm();
+        } else {
+            path = path.split("/");
+            if (path.length !== 2) { return; }
+            var p = db.page(path[0]);
+            if (!p) { return; }
+            addContentPage(db, path[0], path[1]);
+            document.body.className = "lang_" + path[1];
         }
+        window.document.title = $("title").textContent;
+    }
+
+    function initContent() {
+        var db, path, last_lang = "";
         onDbChanged.add(function (newDb) {
             db = newDb;
-            update();
+            addContent(db, path);
         });
-        onPageChanged.add(function (path) {
-            if (path === curPath) { return; }
-            curPath = path;
-            update();
+        onPageChanged.add(function (newPath) {
+            if (path === newPath) { return; }
+            path = newPath;
+            addContent(db, path);
+            newPath = newPath.split("/");
+            if (newPath.length === 2) {
+                last_lang = newPath[1];
+            }
         });
+        $("title").style.display = "none";
+        $("article").textContent = "";
+        $("subs").textContent = "";
+        $("article").appendChild(para("Loading..."));
         $("footer").appendChild(
-            btn(span("login"), function () {
+            clickable(span("login"), function () {
                 onPageChanged.fire("login");
             })
         );
@@ -409,9 +437,9 @@
             var newlang = String(e.href).split("/"), active = true;
             newlang = newlang[newlang.length - 1];
             onPageChanged.add(function (newPath) {
-                var path = newPath.split("/");
-                if (path.length !== 2) { return; }
-                if (newlang === path[1]) {
+                var p = newPath.split("/");
+                if (p.length !== 2) { return; }
+                if (newlang === p[1]) {
                     active = false;
                     e.style.cursor = "default";
                     e.style.opacity = 0.3;
@@ -421,23 +449,55 @@
                     e.style.opacity = 1;
                 }
             });
-            e.href = "#";
-            e.onclick = function () {
-                var p, curpid;
-                if (!active) { return false; }
-                curpid = curPath.split("/")[0];
-                if (db) {
-                    p = db.page(curpid);
-                    if (p && (p.prop("title_" + newlang).length >= 1)) {
-                        onPageChanged.fire(curpid + "/" + newlang);
-                        return false;
+            e.onclick = function (ev) {
+                try {
+                    var p, curpid;
+                    if (active) {
+                        curpid = path.split("/");
+                        if (curpid.length === 2) {
+                            curpid = curpid[0];
+                        } else {
+                            curpid = "index";
+                        }
+                        p = db.page(curpid);
+                        if (p && (p.prop("title_" + newlang).length >= 1)) {
+                            onPageChanged.fire(curpid + "/" + newlang);
+                        } else {
+                            onPageChanged.fire("index/" + newlang);
+                        }
                     }
+                } catch (err) {
+                    error(err);
                 }
-                onPageChanged.fire("index/" + newlang);
+                if (ev) { ev.preventDefault(); }
                 return false;
             };
         }
-        elementChildNodes($("langs")).forEach(upgradeLangLink);
+        function upgradeStaticLink(a) {
+            var href = String(a.getAttribute("href"));
+            if (href.charAt(0) !== "/") {
+                a.target = "_blank";
+                return;
+            }
+            href = href.substring(1).split("/");
+            a.onclick = function (ev) {
+                onPageChanged.fire(href[0] + "/" + last_lang);
+                if (ev) { ev.preventDefault(); }
+                return false;
+            };
+        }
+        (function () {
+            var i, as;
+            as = $("langs").getElementsByTagName("a");
+            for (i = 0; i < as.length; i += 1) {
+                upgradeLangLink(as[i]);
+            }
+            as = document.body.getElementsByTagName("a");
+            for (i = 0; i < as.length; i += 1) {
+                if (as[i].onclick) { return; }
+                upgradeStaticLink(as[i]);
+            }
+        }());
     }
 
     try {
