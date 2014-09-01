@@ -300,7 +300,7 @@
             return p;
         }
         function loginFailedMsg(msg) {
-            var e = div(msg ? msg : "Login failed");
+            var e = div(msg || "Login failed");
             e.className = "jswarning";
             $("leftcolumn").appendChild(e);
             setTimeout(function () {
@@ -503,10 +503,8 @@
     }
 
     try {
-        if (onDbChanged) {
-            initContent();
-            initTreeMenu();
-        }
+        initContent();
+        initTreeMenu();
     } catch (err) {
         error(err);
     }
