@@ -773,8 +773,11 @@
                     var kk = Object.keys(data[pid].props);
                     kk.sort();
                     kk.forEach(function (k) {
+                        var v = data[pid].props[k];
                         if (k !== "parent") {
-                            onprop(k, data[pid].props[k]);
+                            if ((k.length > 0) && (v.length > 0)) {
+                                onprop(k, v);
+                            }
                         }
                     });
                 },
@@ -1428,9 +1431,9 @@
         dbChanged();
     }
 
-    function showPageEdit(pid, parentid) {
+    function pagePropertiesPanel(pid, parentid) {
         var e = div(),
-            links = div(),
+            btn,
             autoid = "",
             btntit = "Save Changes",
             inputs = {},
@@ -1440,11 +1443,6 @@
                 "title_pl": "Title (PL)",
                 "id": "Page Address"
             };
-        makeWindow(
-            e,
-            pid ? ("Edit: " + pid) : ("New Page (in: " + parentid + ")")
-        );
-        e.appendChild(links);
         function cap(text) {
             var d = div(text);
             d.style.width = "120px";
@@ -1483,6 +1481,8 @@
                 return s + "_" + n;
             }
             inp.onchange = inp.onkeyup = function () {
+                e.propsChanged = true;
+                btn.style.display = "block";
                 if (propid === "id") {
                     if (String(inp.value).length >= 1) {
                         autoid = "id";
@@ -1501,25 +1501,21 @@
                     }
                 }
             };
-            return inp;
-        }
-        function linkOnclick(btn) {
-            var oncl = btn.getElementsByTagName("input")[0].onclick;
-            input_ids.forEach(function (id) {
-                inputs[id] = propEdit(id, oncl);
-            });
-            return btn;
+            inputs[propid] = inp;
         }
         if (parentid) {
             btntit = "Create";
             input_ids.push("id");
         }
-        e.appendChild(linkOnclick(windowSaveBtn(btntit, function (showerror) {
-            var p, data = {};
+        btn = windowSaveBtn(btntit, function (showerror) {
+            var p, data = {}, anytitle = false;
             Object.keys(inputs).forEach(function (id) {
                 data[id] = String(inputs[id].value).trim();
+                if ((id.substring(0, 6) === "title_") && data[id]) {
+                    anytitle = true;
+                }
             });
-            if ((data.title_en.length < 1) && (data.title_pl.length < 1)) {
+            if (!anytitle) {
                 showerror("Titles cannot all be empty");
                 return;
             }
@@ -1527,62 +1523,97 @@
                 if (err) {
                     showerror(err);
                 } else {
-                    e.close_window();
+                    showerror();
+                    btn.style.display = "none";
+                    e.propsChanged = undefined;
+                    if (e.close_window) {
+                        e.close_window();
+                    }
                 }
             }
-            if (pid) {
-                p = db.page(pid);
-                if (p) {
-                    p.writeProps(data, onerr);
-                } else {
-                    showerror("Page not found");
-                }
-            } else {
+            if (!pid) {
                 p = data.id;
                 delete data.id;
                 data.parent = parentid;
                 db.create(p, data, onerr);
-            }
-        })));
-        function dbChanged() {
-            if (!pid) {
-                if (!db.page(parentid)) {
-                    e.close_window();
-                }
                 return;
             }
-            if (!db.page(pid)) {
+            p = db.page(pid);
+            if (!p) {
+                showerror("Page not found");
+                return;
+            }
+            p.forEachFile(function (fn) {
+                fn = fn.split(".");
+                if (fn.length !== 2) { return; }
+                if (fn[1] !== "html") { return; }
+                if (!data["title_" + fn[0]]) {
+                    showerror("Title (" + fn[0].toUpperCase() +
+                        ") cannot be empty");
+                    p = undefined;
+                }
+            });
+            if (p) {
+                p.writeProps(data, onerr);
+            }
+        });
+        btn.style.display = "none";
+        input_ids.forEach(function (id) {
+            propEdit(id,  btn.getElementsByTagName("input")[0].onclick);
+        });
+        e.appendChild(btn);
+        return e;
+    }
+
+    function showPageEdit(pid) {
+        var e = div(), bottom = div(), links = div(), panel;
+        makeWindow(e, "Edit: " + pid);
+        e.appendChild(links);
+        e.appendChild(bottom);
+        panel = pagePropertiesPanel(pid);
+        bottom.appendChild(panel);
+        function dbChanged() {
+            var p = db.page(pid);
+            if (!p) {
                 e.close_window();
                 return;
             }
+            if (!panel.propsChanged) {
+                bottom.textContent = "";
+                panel = pagePropertiesPanel(pid);
+                bottom.appendChild(panel);
+            }
             links.textContent = "";
             links.style.marginBottom = "10px";
-            links.appendChild(cap(pid));
             links.appendChild(link(
-                "edit en ",
-                function () {  showEditContent(pid, "en"); }
-            ));
-            links.appendChild(span(" | "));
-            links.appendChild(link(
-                " edit pl ",
-                function () { showEditContent(pid, "pl"); }
-            ));
-            links.appendChild(span(" | "));
-            links.appendChild(link(
-                " icon ",
+                "set icon",
                 function () { showPageIcon(pid); }
             ));
-            if (pid !== "index") {
-                links.appendChild(span(" | "));
+            p.forEachProp(function (k) {
+                if (k.substring(0, 6) !== "title_") { return; }
+                k = k.substring(6);
+                links.appendChild(span(" |"));
                 links.appendChild(link(
-                    " move ",
+                    " edit " + k,
+                    function () { showEditContent(pid, k); }
+                ));
+            });
+            if (pid !== "index") {
+                links.appendChild(span(" |"));
+                links.appendChild(link(
+                    " move",
                     function () { showPageMove(pid); }
                 ));
             }
-            links.appendChild(span(" | "));
+            links.appendChild(span(" |"));
             links.appendChild(link(
-                " new page ",
-                function () { showPageEdit(false, pid); }
+                " new page",
+                function () {
+                    makeWindow(
+                        pagePropertiesPanel(undefined, pid),
+                        "New Page (in: " + pid + ")"
+                    );
+                }
             ));
             if (isDelOptionEnabled(pid)) {
                 links.appendChild(span(" | "));
