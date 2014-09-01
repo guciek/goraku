@@ -107,6 +107,21 @@
         return e;
     }
 
+    function input_select() {
+        var e = document.createElement("select");
+        e.addoption = function (value, label, selected) {
+            var opt = document.createElement("option");
+            value = String(value);
+            opt.value = value;
+            opt.text = label || value;
+            if (selected) {
+                opt.selected = "selected";
+            }
+            e.appendChild(opt);
+        };
+        return e;
+    }
+
     function input_submit(tit, action) {
         var active = true, e = document.createElement("input");
         e.type = "submit";
@@ -1014,6 +1029,8 @@
             } else if (crop_h / crop_w > icon_h / icon_w) {
                 crop_h = crop_w * (icon_h / icon_w);
             }
+            draw.fillStyle = "#fff";
+            draw.fillRect(0, 0, icon_w, icon_h);
             draw.drawImage(
                 img,
                 (img.width - crop_w) / 2,
@@ -1162,22 +1179,15 @@
     }
 
     function textEditor_insertLinkToPage(append_html) {
-        var popup = div(), select = document.createElement("select");
+        var popup = div(), select = input_select();
         popup.appendChild(select);
         select.style.width = "250px";
-        function addopt(val) {
-            var opt = document.createElement("option");
-            opt.value = val;
-            opt.text = val;
-            select.appendChild(opt);
-        }
-        addopt("");
+        select.addoption("", "", true);
         db.forEachPage(function (p) {
             p.forEachProp(function (pname) {
-                if (pname.substring(0, 6) === "title_") {
-                    pname = pname.substring(6);
-                    addopt("/" + p.id() + "/" + pname);
-                }
+                if (pname.substring(0, 6) !== "title_") { return; }
+                var l = "/" + p.id() + "/" + pname.substring(6);
+                select.addoption(l, l);
             });
         });
         popup.appendChild(windowSaveBtn("Add", function (showerror) {
@@ -1394,7 +1404,7 @@
             });
         }));
         function dbChanged() {
-            var p, option, curparent;
+            var p, curparent;
             p = db.page(pid);
             if (!p) { e.close_window(); return; }
             curparent = p.parent();
@@ -1406,20 +1416,12 @@
             if (select) {
                 panel.removeChild(select);
             }
-            select = document.createElement("select");
-            option = document.createElement("option");
-            option.value = "";
-            option.text = "<no parent>";
-            option.selected = (curparent === "") ? "selected" : "";
-            select.appendChild(option);
+            select = input_select();
+            select.addoption("", "<no parent>", curparent === "");
             db.forEachPage(function (parent) {
-                if (isGoodParent(parent)) {
-                    option = document.createElement("option");
-                    option.value = parent.id();
-                    option.text = parent.id();
-                    option.selected = (curparent === parent.id()) ? "selected" : "";
-                    select.appendChild(option);
-                }
+                if (!isGoodParent(parent)) { return; }
+                select.addoption(parent.id(), parent.id(),
+                    curparent === parent.id());
             });
             panel.appendChild(select);
             select.style.width = "300px";
@@ -1431,18 +1433,86 @@
         dbChanged();
     }
 
+    function makeAutoid(s) {
+        s = String(s).toLowerCase();
+        s = s.replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_");
+        s = s.replace(/^_+/, "").replace(/_+$/, "");
+        s = sanitize_id(s);
+        if (!s) { return s; }
+        if (!db.page(s)) { return s; }
+        var n = 2;
+        while (db.page(s + "_" + n)) {
+            n += 1;
+        }
+        return s + "_" + n;
+    }
+
+    function input_tags(initialTags, skip) {
+        var e = div(), checkboxes = {};
+        initialTags = initialTags.split(",");
+        function updValue() {
+            try {
+                var ret = [];
+                Object.keys(checkboxes).forEach(function (id) {
+                    if (checkboxes[id].checked) {
+                        ret.push(id);
+                    }
+                });
+                ret.sort();
+                e.value = ret.join(",");
+                if (e.onchange) { e.onchange(); }
+            } catch (err) {
+                error(err);
+            }
+        }
+        function addtag(id) {
+            var opt = div(), cb;
+            opt.style.display = "inline-block";
+            opt.style.marginRight = "10px";
+            opt.style.overflow = "hidden";
+            cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.onchange = cb.onkeyup = updValue;
+            cb.style.marginRight = "5px";
+            cb.style.verticalAlign = "middle";
+            initialTags.forEach(function (tag) {
+                if (tag === id) {
+                    cb.checked = true;
+                }
+            });
+            opt.appendChild(cb);
+            opt.appendChild(span(id));
+            e.appendChild(opt);
+            checkboxes[id] = cb;
+        }
+        db.forEachPage(function (p) {
+            if (p.id() === skip) { return; }
+            if (p.prop("type") === "tag") {
+                addtag(p.id());
+            }
+        });
+        updValue();
+        return e;
+    }
+
     function pagePropertiesPanel(pid, parentid) {
         var e = div(),
             btn,
             autoid = "",
             btntit = "Save Changes",
             inputs = {},
-            input_ids = ["title_en", "title_pl"],
+            showHideTags,
+            input_ids = ["type", "title_en", "title_pl", "tags"],
             fieldTitles = {
-                "title_en": "Title (EN)",
-                "title_pl": "Title (PL)",
-                "id": "Page Address"
+                "id": "Page Address",
+                "type": "Page Type",
+                "tags": "Tags"
             };
+        function onInputChange() {
+            e.propsChanged = true;
+            btn.style.display = "block";
+            if (showHideTags) { showHideTags(); }
+        }
         function cap(text) {
             var d = div(text);
             d.style.width = "120px";
@@ -1452,55 +1522,69 @@
             return d;
         }
         function propEdit(propid, onsubmit) {
-            var d = div(), inp;
-            d.appendChild(cap(fieldTitles[propid] + ":"));
-            d.style.marginBottom = "10px";
-            inp = input_text(onsubmit);
+            var d = div(), inp, defvalue = "";
             (function () {
                 if (!pid) { return; }
                 var p = db.page(pid);
                 if (p) {
-                    inp.value = p.prop(propid);
+                    defvalue = p.prop(propid);
                 }
             }());
+            function checkChanged() {
+                if (String(inp.value) !== defvalue) {
+                    onInputChange();
+                }
+            }
+            if (propid === "tags") {
+                inp = input_tags(defvalue, pid);
+                inp.style.marginBottom = "10px";
+                inp.style.width = "400px";
+                inp.onchange = checkChanged;
+                checkChanged();
+                e.appendChild(inp);
+                inputs[propid] = inp;
+                return;
+            }
+            if (propid.substring(0, 6) === "title_") {
+                d.appendChild(cap("Title (" +
+                    propid.substring(6).toUpperCase() + "):"));
+            } else {
+                d.appendChild(cap(fieldTitles[propid] + ":"));
+            }
+            if (propid === "type") {
+                inp = input_select();
+                inp.onchange = inp.onkeyup = checkChanged;
+                inp.addoption("", "Normal", defvalue === "");
+                inp.addoption("tag", "Tag", defvalue === "tag");
+            } else {
+                inp = input_text(onsubmit);
+                inp.value = defvalue;
+                inp.onchange = inp.onkeyup = function () {
+                    var s;
+                    checkChanged();
+                    if (propid === "id") {
+                        s = sanitize_id(inp.value);
+                        if (s !== String(inp.value)) {
+                            inp.value = s;
+                        }
+                        if (s.length >= 1) {
+                            autoid = "id";
+                        }
+                    } else if ((propid.substring(0, 6) === "title_") &&
+                            ((autoid === "") || (autoid === propid))) {
+                        autoid = propid;
+                        if (inputs.id) {
+                            inputs.id.value = makeAutoid(inp.value);
+                            if (!inputs.id.value) { autoid = ""; }
+                        }
+                    }
+                };
+            }
             inp.style.width = "260px";
             inp.style.display = "inline-block";
             d.appendChild(inp);
+            d.style.marginBottom = "10px";
             e.appendChild(d);
-            function makeAutoid(s) {
-                s = String(s).toLowerCase();
-                s = s.replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_");
-                s = s.replace(/^_+/, "").replace(/_+$/, "");
-                s = sanitize_id(s);
-                if (!s) { return s; }
-                if (!db.page(s)) { return s; }
-                var n = 2;
-                while (db.page(s + "_" + n)) {
-                    n += 1;
-                }
-                return s + "_" + n;
-            }
-            inp.onchange = inp.onkeyup = function () {
-                e.propsChanged = true;
-                btn.style.display = "block";
-                if (propid === "id") {
-                    if (String(inp.value).length >= 1) {
-                        autoid = "id";
-                        inp.onchange = function () {
-                            var s = sanitize_id(inp.value);
-                            if (s !== String(inp.value)) {
-                                inp.value = s;
-                            }
-                        };
-                    }
-                } else if ((autoid === "") || (autoid === propid)) {
-                    autoid = propid;
-                    if (inputs.id) {
-                        inputs.id.value = makeAutoid(inp.value);
-                        if (!inputs.id.value) { autoid = ""; }
-                    }
-                }
-            };
             inputs[propid] = inp;
         }
         if (parentid) {
@@ -1515,6 +1599,9 @@
                     anytitle = true;
                 }
             });
+            if (data.type === "tag") {
+                data.tags = "";
+            }
             if (!anytitle) {
                 showerror("Titles cannot all be empty");
                 return;
@@ -1561,6 +1648,11 @@
         input_ids.forEach(function (id) {
             propEdit(id,  btn.getElementsByTagName("input")[0].onclick);
         });
+        showHideTags = function () {
+            inputs.tags.style.display = (inputs.type.value === "tag") ?
+                    "none" : "block";
+        };
+        showHideTags();
         e.appendChild(btn);
         return e;
     }

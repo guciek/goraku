@@ -49,7 +49,7 @@ func FolderPageManager(dir string, writeLock bool) (PageManager, error) {
 	}
 
 	syncChanges := func() (returnErr error) {
-		if !writeLock { return 	}
+		if !writeLock { return }
 		for _, p := range pages {
 			if err := p.syncChanges(); (err != nil) && (returnErr == nil) {
 				returnErr = err

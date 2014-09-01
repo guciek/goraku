@@ -128,6 +128,23 @@
         setTimeout(step, 25);
     }
 
+    function sortByFunc(arr, func) {
+        var sorted = [];
+        arr.forEach(function (a) {
+            sorted.push([a, func(a)]);
+        });
+        sorted.sort(function (a, b) {
+            if (a[1] > b[1]) { return 1; }
+            if (a[1] < b[1]) { return -1; }
+            return 0;
+        });
+        arr = [];
+        sorted.forEach(function (a) {
+            arr.push(a[0]);
+        });
+        return arr;
+    }
+
     function postRequest(url, data, onresponse) {
         var req = new XMLHttpRequest();
         req.open("POST", url, true);
@@ -344,7 +361,8 @@
     }
 
     function addContentPage(db, pid, lang) {
-        var p = db.page(pid), tit;
+        var p = db.page(pid), tit, children = [], visitedSubs = {};
+        visitedSubs[pid] = true;
         tit = p.prop("title_" + lang);
         if (!tit) { return; }
         function fixLinks(elem) {
@@ -366,7 +384,25 @@
                 fixLinks($("article"));
             });
         }
-        p.forEachChild(function (c) {
+        function addChild(c) {
+            if (visitedSubs[c.id()]) { return; }
+            visitedSubs[c.id()] = true;
+            children.push(c);
+        }
+        p.forEachChild(addChild);
+        if (p.prop("type") === "tag") {
+            db.forEachPage(function (c) {
+                c.prop("tags").split(",").forEach(function (t) {
+                    if (t === pid) {
+                        addChild(c);
+                    }
+                });
+            });
+        }
+        children = sortByFunc(children, function (c) {
+            return c.prop("title_" + lang);
+        });
+        children.forEach(function (c) {
             var id = c.id(), ctit = c.prop("title_" + lang), li, a, img;
             if (ctit.length < 1) { return; }
             li = document.createElement("li");
@@ -385,7 +421,7 @@
             }
             a.appendChild(span(ctit));
             $("subs").appendChild(li);
-        }, function (c) { return c.prop("title_" + lang); });
+        });
     }
 
     function addContent(db, path) {
