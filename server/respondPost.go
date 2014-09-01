@@ -9,9 +9,17 @@ import (
 	"github.com/guciek/goraku/pgman"
 	"github.com/guciek/goraku/session"
 	"github.com/guciek/goraku/util"
+	"bytes"
 	"strings"
 	"time"
 )
+
+func respondPostDb(r Request, pm pgman.PageManager) Response {
+	if !bytes.HasPrefix(r.Body, []byte("getdb;")) {
+		return binResponse([]byte("Invalid query"))
+	}
+	return binResponse(jsonDb(pm))
+}
 
 func respondPostLogin(r Request, perm session.Permissions) Response {
 	a := strings.Split(string(r.Body), ":")
@@ -41,6 +49,7 @@ func respondPostFile(r Request, pm pgman.PageManager) Response {
 func respondPost(r Request, perm session.Permissions,
 		pm pgman.PageManager) Response {
 	switch strings.Split(r.Path[1:], "/")[0] {
+		case "db": return respondPostDb(r, pm)
 		case "login": return respondPostLogin(r, perm)
 		case "file": return respondPostFile(r, pm)
 	}

@@ -1,5 +1,5 @@
 
-var showError, initdb, onDbChanged, onPageChanged;
+var showError, onDbChanged, onPageChanged;
 
 Array.prototype.forEach = function (f) {
     "use strict";
@@ -227,30 +227,49 @@ Array.prototype.forEach = function (f) {
 
     showError = error;
 
-    initdb = function (data) {
+    function initPageEvents() {
         function changePageFromBrowser() {
-            onPageChanged.fire(String(window.location.pathname).substring(1), true);
+            onPageChanged.fire(
+                String(window.location.pathname).substring(1),
+                true
+            );
         }
-        try {
-            onDbChanged.fire(makeDbWrapper(data));
-            changePageFromBrowser();
-            window.onpopstate = changePageFromBrowser;
-            onPageChanged.add(function (newPath, browserInitiated) {
-                if (browserInitiated) { return; }
-                var path = newPath.split("/");
-                if (path.length !== 2) { return; }
-                newPath = "/" + newPath;
-                if (String(window.location.pathname) === newPath) { return; }
-                window.history.pushState({}, newPath, newPath);
-            });
-        } catch (err) {
-            error(err);
-        }
-    };
+        changePageFromBrowser();
+        window.onpopstate = changePageFromBrowser;
+        onPageChanged.add(function (newPath, browserInitiated) {
+            if (browserInitiated) { return; }
+            var path = newPath.split("/");
+            if (path.length !== 2) { return; }
+            newPath = "/" + newPath;
+            if (String(window.location.pathname) === newPath) { return; }
+            window.history.pushState({}, newPath, newPath);
+        });
+    }
+
+    function dbLoadStart() {
+        postRequest(
+            "/db",
+            "getdb;" + String(new Date().getTime()),
+            function (d) {
+                if ((d.length < 1) || (d[0] !== "{")) {
+                    error("Could not load database!");
+                    return;
+                }
+                d = eval("(" + d + ")");
+                if (!d) {
+                    error("Invalid database data!");
+                    return;
+                }
+                onDbChanged.fire(makeDbWrapper(d));
+                initPageEvents();
+            }
+        );
+    }
 
     try {
         onDbChanged = makeEvent();
         onPageChanged = makeEvent();
+        dbLoadStart();
     } catch (err) {
         error(err);
     }

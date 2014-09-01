@@ -410,7 +410,7 @@
     }
 
     function initContent() {
-        var db, path, last_lang = "";
+        var db, path = "", last_lang = "";
         onDbChanged.add(function (newDb) {
             db = newDb;
             addContent(db, path);
@@ -452,7 +452,7 @@
             e.onclick = function (ev) {
                 try {
                     var p, curpid;
-                    if (active) {
+                    if (active && db && (path.length > 0)) {
                         curpid = path.split("/");
                         if (curpid.length === 2) {
                             curpid = curpid[0];
@@ -481,7 +481,9 @@
             }
             href = href.substring(1).split("/");
             a.onclick = function (ev) {
-                onPageChanged.fire(href[0] + "/" + last_lang);
+                if (last_lang.length > 0) {
+                    onPageChanged.fire(href[0] + "/" + last_lang);
+                }
                 if (ev) { ev.preventDefault(); }
                 return false;
             };

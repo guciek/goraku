@@ -38,17 +38,6 @@ func respondFile(r Request, perm session.Permissions,
 		return notFound()
 	}
 
-	if r.Path == "db.js" {
-		return Response {
-			Code: 200,
-			Headers: map[string]string {
-				"Content-Type": "application/x-javascript",
-				"Cache-Control": "max-age=3600",
-			},
-			Body: []byte("initdb("+string(jsonDb(pm))+");\n"),
-		}
-	}
-
 	if util.ValidFileName(r.Path) {
 		d := data.ByPath("http/"+r.Path)
 		if len(d) < 1 { return notFound() }
