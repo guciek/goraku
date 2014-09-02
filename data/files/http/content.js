@@ -362,7 +362,6 @@
 
     function addContentPage(db, pid, lang) {
         var p = db.page(pid), tit, children = [], visitedSubs = {};
-        visitedSubs[pid] = true;
         tit = p.prop("title_" + lang);
         if (!tit) { return; }
         function fixLinks(elem) {
@@ -392,6 +391,7 @@
         p.forEachChild(addChild);
         if (p.prop("type") === "tag") {
             db.forEachPage(function (c) {
+                if (c.prop("type") === "tag") { return; }
                 c.prop("tags").split(",").forEach(function (t) {
                     if (t === pid) {
                         addChild(c);

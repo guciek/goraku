@@ -19,9 +19,8 @@ func pageSubs(pm pgman.PageManager, parent pgman.Page, lang string) []byte {
 	var buf bytes.Buffer
 	pm.ForEach(func(p pgman.Page) {
 		if p.Property("parent") != parent.Id() {
-			if parent.Property("type") != "tag" {
-				return;
-			}
+			if (parent.Property("type") != "tag") ||
+				(p.Property("type") == "tag") { return; }
 			found := false
 			for _, t := range strings.Split(p.Property("tags"), ",") {
 				if t == parent.Id() {
