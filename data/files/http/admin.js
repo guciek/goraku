@@ -256,7 +256,7 @@
             block.want("p");
             inline.want("");
             writeWhitespace(" ");
-            writeText('<img src="' + src + '" />');
+            writeText('<img src="' + src + '" alt="[img]" />');
             writeWhitespace(" ");
         }
         function ontag(originaltag) {
@@ -1727,9 +1727,8 @@
     }
 
     function openPageList() {
-        var list = div(),
-            e = div();
-        makeWindow(e, "Page List", true);
+        var e = div(), list = div();
+        makeWindow(e, "Page List");
         e.appendChild(list);
         e.style.minWidth = "200px";
         e.style.minHeight = "100px";
@@ -1738,26 +1737,30 @@
         e.style.overflow = "scroll";
         e.style.resize = "both";
         e.style.background = "#fff";
+        function pageOptions(p) {
+            var s = span(p.id());
+            p.forEachProp(function (k) {
+                if (k.substring(0, 6) !== "title_") { return; }
+                k = k.substring(6);
+                s.appendChild(link(
+                    " " + k,
+                    function () {
+                        onPageChanged.fire(p.id() + "/" + k);
+                    }
+                ));
+            });
+            s.appendChild(link(
+                " [edit]",
+                function () { showPageEdit(p.id()); }
+            ));
+            return s;
+        }
         function dbChanged() {
             var parent, lines = {};
             list.textContent = "";
             db.forEachPage(function (p) {
-                var line = div(p.id());
+                var line = div(pageOptions(p));
                 line.style.marginBottom = "10px";
-                p.forEachProp(function (k) {
-                    if (k.substring(0, 6) !== "title_") { return; }
-                    k = k.substring(6);
-                    line.appendChild(link(
-                        " " + k,
-                        function () {
-                            onPageChanged.fire(p.id() + "/" + k);
-                        }
-                    ));
-                });
-                line.appendChild(link(
-                    " [edit]",
-                    function () { showPageEdit(p.id()); }
-                ));
                 lines[p.id()] = line;
             });
             Object.keys(lines).forEach(function (l) {
@@ -1775,6 +1778,37 @@
             onDbChanged.remove(dbChanged);
         };
         dbChanged();
+    }
+
+    function openAdminWindow() {
+        var e = div(), curPage = "";
+        makeWindow(e, "Administration", true);
+        e.style.width = "300px";
+        function update() {
+            e.textContent = "";
+            e.appendChild(div(link(
+                "Open Page List",
+                openPageList
+            )));
+            var path = curPage.split("/"), p, d;
+            if (path.length !== 2) { return; }
+            if (path[0].length < 1) { return; }
+            p = db.page(path[0]);
+            if (!p) { return; }
+            d = div(link(
+                "Edit Current Page: " + p.id(),
+                function () { showPageEdit(p.id()); }
+            ));
+            d.style.marginTop = "10px";
+            e.appendChild(d);
+        }
+        function pgChanged(newPage) {
+            if (newPage) { curPage = newPage; }
+            update();
+        }
+        onDbChanged.add(update);
+        onPageChanged.add(pgChanged);
+        update();
     }
 
     function init() {
@@ -1797,10 +1831,10 @@
                     w.style.color = "#f00";
                     return;
                 }
+                w.close_window();
                 db = makeDbWrapper(d);
                 onDbChanged.fire(db);
-                openPageList();
-                w.close_window();
+                openAdminWindow();
             }
         );
     }
