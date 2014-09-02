@@ -145,7 +145,12 @@ func respondAdminSetfile(r Request, pm pgman.PageManager) Response {
 
 func respondAdmin(r Request, perm session.Permissions,
 		pm pgman.PageManager) Response {
-	if !perm.IsAdmin() { return notFound() }
+	if !perm.IsAdmin() {
+		return binResponse([]byte("Permission denied"))
+	}
+	if !pm.HasWriteLock() {
+		return binResponse([]byte("Could not acquire write lock"))
+	}
 	switch r.Path {
 		case "/admin/getdb": return respondAdminDb(r, pm)
 		case "/admin/setprops": return respondAdminSetprops(r, pm)

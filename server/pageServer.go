@@ -47,8 +47,8 @@ func pageServer(logger log.Logger) (Server, error) {
 				pm.DropWriteLock()
 			}()
 			perm := sm.OnRequest(r.Headers["cookie"])
-			if perm.IsAdmin() && strings.HasPrefix(r.Path, "/admin/") {
-				if !pm.HasWriteLock() { reloadPm(true) }
+			if strings.HasPrefix(r.Path, "/admin/") {
+				if perm.IsAdmin() && (!pm.HasWriteLock()) { reloadPm(true) }
 				response = respondAdmin(r, perm, pm)
 			} else {
 				if time.Now().Sub(pm_reloaded) > time.Hour {

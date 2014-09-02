@@ -22,7 +22,7 @@ def js_quoted_split(s):
 			elif c >= 33 and c <= 126:
 				cur += chr(c)
 			else:
-				raise Exception("Unknown character %d"%c)
+				raise Exception("Unexpected character %d"%c)
 		else:
 			if (c == quot) and (not after_backslash):
 				yield quot+cur+quot
@@ -37,7 +37,7 @@ def js_quoted_split(s):
 					after_backslash = False
 					cur += chr(c)
 				else:
-					raise Exception("Unexpected character %d in string"%c)
+					raise Exception("Unexpected character %d in string '%s'"%(c,cur))
 
 def js_alnum(c):
 	return c.isalnum() or c == '_' or c == '$'

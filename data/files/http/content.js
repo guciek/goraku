@@ -361,16 +361,18 @@
     }
 
     function addContentPage(db, pid, lang) {
-        var p = db.page(pid), tit, children = [], visitedSubs = {};
-        tit = p.prop("title_" + lang);
+        var p = db.page(pid),
+            tit = p.prop("title_" + lang),
+            children = [],
+            visitedSubs = {};
         if (!tit) { return; }
+        $("title").textContent = tit;
         function fixLinks(elem) {
             var i, links = elem.getElementsByTagName("a");
             for (i = 0; i < links.length; i += 1) {
                 upgradeLink(db, links[i]);
             }
         }
-        $("title").textContent = tit;
         if (p.hasFile(lang + ".html")) {
             $("article").appendChild(para("Loading..."));
             p.onFileData(lang + ".html", function (r, err) {
@@ -432,7 +434,7 @@
         $("title").textContent = "";
         $("article").textContent = "";
         $("subs").textContent = "";
-        if (path === "login") {
+        if (path === "[login]") {
             addContentLoginForm();
         } else {
             path = path.split("/");
@@ -466,7 +468,7 @@
         $("article").appendChild(para("Loading..."));
         $("footer").appendChild(
             clickable(span("login"), function () {
-                onPageChanged.fire("login");
+                onPageChanged.fire("[login]");
             })
         );
         function upgradeLangLink(e) {

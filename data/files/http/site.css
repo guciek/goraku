@@ -19,23 +19,22 @@ input { border: 1px solid #444; background: #fff; padding: 2px 5px;
 input[type="submit"] { background: #ddd; padding: 2px 15px }
 input[type="submit"]:hover { background: #888 }
 
-div#page { margin: 20px auto; width: 932px; background: #dde;
+div#page { margin: 20px auto; width: 950px; background: #dde;
 	border-radius: 15px; -moz-border-radius: 15px;
 	border: 5px solid #fff; box-shadow: 0 0 50px rgba(0,0,0,0.2) }
 
 div#header { padding: 30px 41px }
 div#header * { color: #88a; font-size: 50px; text-decoration: none }
 
-div#langs { margin-bottom: 20px }
-div#langs a { text-decoration: none }
-div#langs img { border: 1px solid #fff }
-
 div#rightcolumn { font-size: 12px; float: right; width: 185px;
 	overflow: hidden; margin-right: 41px }
 div#rightcolumn * { font-size: 12px }
 
-div#leftcolumn { width: 642px; overflow: hidden;
-	margin-left: 41px }
+div#langs { margin-bottom: 20px }
+div#langs a { text-decoration: none }
+div#langs img { border: 1px solid #fff }
+
+div#leftcolumn { width: 642px; overflow: hidden; margin-left: 41px }
 
 div#article { line-height: 18px }
 

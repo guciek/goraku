@@ -789,10 +789,9 @@
                     kk.sort();
                     kk.forEach(function (k) {
                         var v = data[pid].props[k];
-                        if (k !== "parent") {
-                            if ((k.length > 0) && (v.length > 0)) {
-                                onprop(k, v);
-                            }
+                        if ((k.length > 0) && (v.length > 0) &&
+                                (k !== "parent")) {
+                            onprop(k, v);
                         }
                     });
                 },
@@ -1505,8 +1504,13 @@
             autoid = "",
             btntit = "Save Changes",
             inputs = {},
-            showHideTags,
-            input_ids = ["type", "title_en", "title_pl", "tags"],
+            showHideInputs,
+            input_ids = [
+                "type",
+                "title_en",
+                "title_pl",
+                "tags"
+            ],
             fieldTitles = {
                 "id": "Page Address",
                 "type": "Page Type",
@@ -1515,7 +1519,7 @@
         function onInputChange() {
             e.propsChanged = true;
             btn.style.display = "block";
-            if (showHideTags) { showHideTags(); }
+            if (showHideInputs) { showHideInputs(); }
         }
         function cap(text) {
             var d = div(text);
@@ -1652,18 +1656,18 @@
         input_ids.forEach(function (id) {
             propEdit(id,  btn.getElementsByTagName("input")[0].onclick);
         });
-        showHideTags = function () {
-            inputs.tags.style.display = (inputs.type.value === "tag") ?
-                    "none" : "block";
+        showHideInputs = function () {
+            inputs.tags.style.display =
+                (inputs.type.value === "tag") ? "none" : "block";
         };
-        showHideTags();
+        showHideInputs();
         e.appendChild(btn);
         return e;
     }
 
     function showPageEdit(pid) {
         var e = div(), bottom = div(), links = div(), panel;
-        makeWindow(e, "Edit: " + pid);
+        makeWindow(e, "Edit Page: " + pid);
         e.appendChild(links);
         e.appendChild(bottom);
         panel = pagePropertiesPanel(pid);
@@ -1707,7 +1711,7 @@
                 function () {
                     makeWindow(
                         pagePropertiesPanel(undefined, pid),
-                        "New Page (in: " + pid + ")"
+                        "Create New Page (in: " + pid + ")"
                     );
                 }
             ));
