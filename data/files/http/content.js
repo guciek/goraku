@@ -363,10 +363,12 @@
     function addContentPage(db, pid, lang) {
         var p = db.page(pid),
             tit = p.prop("title_" + lang),
+            articleContent = div(),
             children = [],
             visitedSubs = {};
         if (!tit) { return; }
         $("title").textContent = tit;
+        $("article").appendChild(articleContent);
         function fixLinks(elem) {
             var i, links = elem.getElementsByTagName("a");
             for (i = 0; i < links.length; i += 1) {
@@ -374,15 +376,15 @@
             }
         }
         if (p.hasFile(lang + ".html")) {
-            $("article").appendChild(para("Loading..."));
+            articleContent.appendChild(para("Loading..."));
             p.onFileData(lang + ".html", function (r, err) {
                 if (err || (!r)) {
-                    $("article").textContent = "";
-                    $("article").appendChild(para("Loading failed!"));
+                    articleContent.textContent = "";
+                    articleContent.appendChild(para("Loading failed!"));
                     return;
                 }
-                $("article").innerHTML = r;
-                fixLinks($("article"));
+                articleContent.innerHTML = r;
+                fixLinks(articleContent);
             });
         }
         function addChild(c) {

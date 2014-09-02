@@ -1131,6 +1131,7 @@
             onerror("File is too large");
             return;
         }
+        onerror(false, "Loading image...");
         fr.onload = function (ev) {
             var fn, n = 1, p, data = String(ev.target.result);
             if (data.length < 1) { return; }
@@ -1148,6 +1149,7 @@
                 n = n + 1;
                 fn = "img_" + n + "." + fext;
             }
+            onerror(false, "Sending...");
             p.writeFile(fn, data, "binary", function (err) {
                 onerror(err);
                 if (err) { return; }
@@ -1159,23 +1161,30 @@
 
     function textEditor_insertImage(append_html, pid) {
         var popup = div(), inp = input_text(), msg = div();
+        popup.style.width = "250px";
         popup.appendChild(inp);
         popup.appendChild(msg);
         inp.type = "file";
-        inp.style.width = "250px";
-        inp.style.padding = "0";
         inp.style.border = "0";
         inp.style.background = "transparent";
         inp.onchange = function () {
-            textEditor_insertImage_onFile(append_html, pid, inp, function (err) {
-                if (err) {
-                    msg.textContent = "Error: " + err;
-                    msg.style.marginTop = "10px";
-                    msg.style.color = "#f00";
-                } else {
-                    popup.close_window();
+            textEditor_insertImage_onFile(
+                append_html,
+                pid,
+                inp,
+                function (err, info) {
+                    inp.style.display = "none";
+                    if (err) {
+                        msg.textContent = "Error: " + err;
+                        msg.style.color = "#f00";
+                    } else if (info) {
+                        msg.textContent = info;
+                        msg.style.color = "#555";
+                    } else {
+                        popup.close_window();
+                    }
                 }
-            });
+            );
         };
         return popup;
     }
@@ -1266,21 +1275,21 @@
         line.appendChild(span("Insert: "));
         line.appendChild(link(" image ", function () {
             openPopupWindow(
-                "Insert image",
+                "Insert Image",
                 textEditor_insertImage(append_html, pid)
             );
         }));
         line.appendChild(span(" | "));
         line.appendChild(link(" link to page ", function () {
             openPopupWindow(
-                "Insert link to page",
+                "Insert Link to Page",
                 textEditor_insertLinkToPage(append_html)
             );
         }));
         line.appendChild(span(" | "));
         line.appendChild(link(" link to url ", function () {
             openPopupWindow(
-                "Insert link to URL",
+                "Insert Link to URL",
                 textEditor_insertLinkToURL(append_html)
             );
         }));
