@@ -24,6 +24,10 @@ func FolderPageManager(dir string, writeLock bool) (PageManager, error) {
 		if err != nil { return PageManager {}, err }
 	}
 
+	hasWriteLock := func() bool {
+		return writeLock
+	}
+
 	var pages = make(map[string]managedPageData)
 	var cleanPages = func() {
 		for id, p := range pages {
@@ -38,18 +42,17 @@ func FolderPageManager(dir string, writeLock bool) (PageManager, error) {
 		for _, f := range d {
 			if f.IsDir() && util.ValidId(f.Name()) {
 				pages[f.Name()] = managedPage(dir, f.Name(),
-					writeLock, cleanPages)
+					hasWriteLock, cleanPages)
 			}
 		}
 		if pages["index"].Id == nil {
 			err = os.Mkdir(dir+"/index", 0700)
 			if err != nil { return PageManager {}, err }
-			pages["index"] = managedPage(dir, "index", writeLock, cleanPages)
+			pages["index"] = managedPage(dir, "index", hasWriteLock, cleanPages)
 		}
 	}
 
 	syncChanges := func() (returnErr error) {
-		if !writeLock { return }
 		for _, p := range pages {
 			if err := p.syncChanges(); (err != nil) && (returnErr == nil) {
 				returnErr = err
@@ -66,9 +69,7 @@ func FolderPageManager(dir string, writeLock bool) (PageManager, error) {
 	}
 
 	return PageManager {
-		HasWriteLock: func() bool {
-			return writeLock
-		},
+		HasWriteLock: hasWriteLock,
 		DropWriteLock: dropLock,
 		ById: func(id string) Page {
 			return pages[id].Page
@@ -83,7 +84,7 @@ func FolderPageManager(dir string, writeLock bool) (PageManager, error) {
 			}
 			err = os.Mkdir(dir+"/"+id, 0700)
 			if err != nil { return }
-			pages[id] = managedPage(dir, id, writeLock, cleanPages)
+			pages[id] = managedPage(dir, id, hasWriteLock, cleanPages)
 			p = pages[id].Page
 			return
 		},

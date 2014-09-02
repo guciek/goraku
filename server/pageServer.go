@@ -35,7 +35,7 @@ func pageServer(logger log.Logger) (Server, error) {
 		}
 		new_pm, err := pgman.FolderPageManager(pagesDir, writeLock)
 		if err != nil {
-			logger.Error("could not reload page manager: %v", err)
+			logger.Error("reload: %v", err)
 			return
 		}
 		pm = new_pm

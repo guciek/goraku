@@ -954,9 +954,12 @@
             });
         });
         subm.style.display = "inline-block";
+        subm.style.verticalAlign = "middle";
         line.appendChild(subm);
         status = div();
         status.style.display = "inline-block";
+        status.style.verticalAlign = "middle";
+        status.style.maxWidth = "250px";
         status.style.overflow = "hidden";
         status.style.marginLeft = "20px";
         line.appendChild(status);
@@ -1366,6 +1369,7 @@
         p.onFileData(lang + ".html", function (data, err) {
             if (err) {
                 e.textContent = "Error: " + err;
+                e.style.color = "#f00";
                 return;
             }
             e.textContent = "";
@@ -1776,17 +1780,21 @@
     function init() {
         var w = div("Loading database...");
         makeWindow(w, "Administration", true);
+        w.style.width = "300px";
         postRequest(
             "/admin/getdb",
             "getdb;" + String(new Date().getTime()),
             function (d) {
                 if ((d.length < 1) || (d[0] !== "{")) {
-                    w.textContent = "Could not load database!";
+                    w.textContent = "Error: Could not load database!" +
+                        (d ? " (" + d + ")" : "");
+                    w.style.color = "#f00";
                     return;
                 }
                 d = eval("(" + d + ")");
                 if (!d) {
-                    w.textContent = "Invalid database data!";
+                    w.textContent = "Error: Invalid database data!";
+                    w.style.color = "#f00";
                     return;
                 }
                 db = makeDbWrapper(d);

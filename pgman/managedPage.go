@@ -18,7 +18,7 @@ type managedPageData struct {
 	syncChanges func() error
 }
 
-func managedPage(dir string, id string, writeAllowed bool,
+func managedPage(dir string, id string, writeAllowed func() bool,
 		onRemove func()) managedPageData {
 	var cachedErr error = nil
 	removed := false
@@ -70,9 +70,18 @@ func managedPage(dir string, id string, writeAllowed bool,
 				return props[k]
 			},
 			SetProperty: func(k string, v string) {
-				if !writeAllowed { return }
-				if removed { return }
-				if !util.ValidId(k) { return }
+				{
+					emsg := ""
+					if removed { emsg = "can't write: removed page" }
+					if !util.ValidId(k) { emsg = "invalid property id" }
+					if !writeAllowed() { emsg = "write not allowed" }
+					if emsg != "" {
+						if (cachedErr == nil) {
+							cachedErr = fmt.Errorf(emsg);
+						}
+						return;
+					}
+				}
 				initProps()
 				if !propsInitzd { return }
 				if props[k] == v { return }
@@ -106,7 +115,7 @@ func managedPage(dir string, id string, writeAllowed bool,
 				return data
 			},
 			WriteFile: func(f string, data []byte) error {
-				if !writeAllowed {
+				if !writeAllowed() {
 					return fmt.Errorf("write not allowed")
 				}
 				if !util.ValidFileName(f) {
@@ -123,7 +132,7 @@ func managedPage(dir string, id string, writeAllowed bool,
 				return ioutil.WriteFile(fpath, data, 0600)
 			},
 			Remove: func() error {
-				if !writeAllowed {
+				if !writeAllowed() {
 					return fmt.Errorf("write not allowed")
 				}
 				if id == "index" {

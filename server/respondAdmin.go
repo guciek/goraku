@@ -16,7 +16,9 @@ import (
 )
 
 func respondAdminDb(r Request, pm pgman.PageManager) Response {
-	if !pm.HasWriteLock() { return binResponse([]byte("FAIL")) }
+	if !pm.HasWriteLock() {
+		return binResponse([]byte("Could not acquire write lock"))
+	}
 	if !bytes.HasPrefix(r.Body, []byte("getdb;")) {
 		return binResponse([]byte("Invalid query"))
 	}
@@ -35,7 +37,8 @@ func respondAdminSetprops(r Request, pm pgman.PageManager) Response {
 		var err error
 		p, err = pm.Create(id)
 		if (err != nil) || (p.Id == nil) {
-			return binResponse([]byte("Page not found"))
+			return binResponse([]byte(fmt.Sprintf("Could not create page: %v",
+				err)))
 		}
 	}
 	for _, line := range lines[1:len(lines)-1] {
