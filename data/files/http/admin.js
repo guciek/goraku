@@ -5,6 +5,7 @@
     var db,
         makeWindow,
         postRequest,
+        iconSize = { width: 145, height: 110 },
         error = showError;
 
     function makeSet() {
@@ -1005,8 +1006,7 @@
     }
 
     function showPageIcon(pid) {
-        var e = div(), canvas, inp = input_text(), draw,
-            icon_w = 145, icon_h = 110, empty = true;
+        var e = div(), canvas, inp = input_text(), draw, empty = true;
         canvas = document.createElement("canvas");
         draw = canvas.getContext('2d');
         makeWindow(e, "Icon: " + pid);
@@ -1018,21 +1018,21 @@
         inp.style.marginBottom = "10px";
         e.appendChild(div(inp));
         canvas.style.border = "1px solid black";
-        canvas.width = icon_w;
-        canvas.height = icon_h;
+        canvas.width = iconSize.width;
+        canvas.height = iconSize.height;
         e.appendChild(div(canvas));
         draw.fillText("no icon", 10, 10);
         function setImg(img) {
             var crop_w = img.width,
                 crop_h = img.height;
             if ((crop_w < 5) || (crop_h < 5)) { return; }
-            if (crop_w / crop_h > icon_w / icon_h) {
-                crop_w = crop_h * (icon_w / icon_h);
-            } else if (crop_h / crop_w > icon_h / icon_w) {
-                crop_h = crop_w * (icon_h / icon_w);
+            if (crop_w / crop_h > iconSize.width / iconSize.height) {
+                crop_w = crop_h * (iconSize.width / iconSize.height);
+            } else if (crop_h / crop_w > iconSize.height / iconSize.width) {
+                crop_h = crop_w * (iconSize.height / iconSize.width);
             }
             draw.fillStyle = "#fff";
-            draw.fillRect(0, 0, icon_w, icon_h);
+            draw.fillRect(0, 0, iconSize.width, iconSize.height);
             draw.drawImage(
                 img,
                 (img.width - crop_w) / 2,
@@ -1041,8 +1041,8 @@
                 crop_h,
                 0,
                 0,
-                icon_w,
-                icon_h
+                iconSize.width,
+                iconSize.height
             );
             empty = false;
         }
@@ -1153,7 +1153,7 @@
             p.writeFile(fn, data, "binary", function (err) {
                 onerror(err);
                 if (err) { return; }
-                append_html('<p><img src="/' + fn + '" /></p>');
+                append_html('<img src="/' + fn + '" />');
             });
         };
         fr.readAsBinaryString(inp.files[0]);
