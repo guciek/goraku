@@ -1161,12 +1161,9 @@
 
     function textEditor_insertImage(append_html, pid) {
         var popup = div(), inp = input_text(), msg = div();
-        popup.style.width = "250px";
         popup.appendChild(inp);
         popup.appendChild(msg);
         inp.type = "file";
-        inp.style.border = "0";
-        inp.style.background = "transparent";
         inp.onchange = function () {
             textEditor_insertImage_onFile(
                 append_html,
