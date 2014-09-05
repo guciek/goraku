@@ -47,8 +47,9 @@ func jsonDb(pm pgman.PageManager) []byte {
 	pm.ForEach(func(p pgman.Page) {
 		if !first { buf.WriteString(",") }
 		first = false;
+		buf.WriteRune('"')
 		buf.WriteString(p.Id())
-		buf.WriteString(":")
+		buf.WriteString("\":")
 		buf.Write(jsonPage(p))
 	})
 	buf.WriteString("}")

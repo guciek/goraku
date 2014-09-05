@@ -167,8 +167,10 @@
                     error("Could not load database!");
                     return;
                 }
-                d = eval("(" + d + ")");
-                if (!d) {
+                try {
+                    d = eval("(" + d + ")");
+                    if (!d) { throw "empty"; }
+                } catch (err) {
                     error("Invalid database data!");
                     return;
                 }
