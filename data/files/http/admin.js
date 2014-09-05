@@ -198,6 +198,15 @@
 
     function cleanHtml(inputHtml, imgBase) {
         var writeText, writeWhitespace, block, inline;
+        function cutbetween(str, start, end) {
+            var p, p2;
+            p = str.indexOf(start, 2);
+            if (p < 0) { return ""; }
+            p += start.length;
+            p2 = str.indexOf(end, p);
+            if (p2 < 0) { return ""; }
+            return str.substring(p, p2);
+        }
         function tagWriter(write, inner) {
             var t = "";
             function tclose() {
@@ -242,13 +251,14 @@
             }
         }
         function ontag_img(tag) {
-            var p, p2, src;
-            p = tag.indexOf('src="', 2);
-            if (p < 0) { return; }
-            p += 5;
-            p2 = tag.indexOf('"', p);
-            if (p2 < 0) { return; }
-            src = tag.substring(p, p2);
+            var src = cutbetween(tag, 'src="', '"'),
+                alt = cutbetween(tag, 'alt="', '"');
+            if (!src) {
+                return;
+            }
+            if (!alt) {
+                alt = "[img]";
+            }
             if (src.substring(0, 5) !== "data:") {
                 src = src.split("/");
                 src = src[src.length - 1];
@@ -257,7 +267,7 @@
             block.want("p");
             inline.want("");
             writeWhitespace(" ");
-            writeText('<img src="' + src + '" alt="[img]" />');
+            writeText('<img src="' + src + '" alt="' + alt + '" />');
             writeWhitespace(" ");
         }
         function ontag(originaltag) {
@@ -351,8 +361,12 @@
             }
         }
         return (function () {
-            var result = "", wanted_inline = "", wanted_block = "p",
-                whitespace_last = true, whitespace_buffered = 0;
+            var result = "",
+                wanted_inline = "",
+                wanted_block = "p",
+                whitespace_last = true,
+                whitespace_buffered = 0,
+                lastTextWasImage = false;
             function result_append(s) {
                 result += s;
             }
@@ -374,6 +388,9 @@
             writeText = function (s) {
                 s = String(s).trim();
                 if (s.length < 1) { return; }
+                if ((s.substring(0, 4) === "<img") && (!lastTextWasImage)) {
+                    block.close();
+                }
                 if (block.opened() !== wanted_block) {
                     block.open(wanted_block);
                     whitespace_last = (wanted_block !== "pre");
@@ -399,6 +416,7 @@
                     inline.open(wanted_inline);
                 }
                 result_append(s);
+                lastTextWasImage = (s.substring(0, 4) === "<img");
                 whitespace_last = false;
             };
             writeWhitespace = function (s) {
@@ -1204,7 +1222,7 @@
                 showerror("Choose an option");
                 return;
             }
-            append_html('<p><a href="' + l + '">' + l + '</a></p>');
+            append_html('<a href="' + l + '">' + l + '</a>');
             popup.close_window();
         }));
         return popup;
@@ -1219,7 +1237,7 @@
                 showerror("Invalid link");
                 return;
             }
-            append_html('<p><a href="' + l + '">' + l + '</a></p>');
+            append_html('<a href="' + l + '">' + l + '</a>');
             popup.close_window();
         });
         inp = input_text(btn.getElementsByTagName("input")[0].onclick);
@@ -1310,23 +1328,34 @@
                 popups.forEach(function (p) { p.close_window(); });
             };
         }());
+        function upgradeImage(img) {
+            function changeBorder() {
+                img.style.border = (img.alt === "[zoom]") ?
+                        "3px solid #f00" : "3px solid #00f";
+            }
+            img.contentEditable = false;
+            img.style.minWidth = "20px";
+            img.style.minHeight = "20px";
+            img.style.maxWidth = "40px";
+            img.style.maxHeight = "40px";
+            img.style.margin = "2px";
+            img.style.verticalAlign = "middle";
+            changeBorder();
+            img.onclick = function () {
+                img.alt = (img.alt === "[zoom]") ? "[img]" : "[zoom]";
+                changeBorder();
+            };
+        }
         function getCleanHtml(append) {
             var h = editable.innerHTML, imgs, i;
             if (append) {
-                h += append;
+                h += " " + append;
             }
             h = cleanHtml(h, "/file/" + pid + "/");
             editable.innerHTML = (h.length > 0) ? h : "<p></p>";
             imgs = editable.getElementsByTagName("img");
             for (i = 0; i < imgs.length; i = i + 1) {
-                imgs[i].contentEditable = false;
-                imgs[i].style.minWidth = "20px";
-                imgs[i].style.minHeight = "20px";
-                imgs[i].style.maxWidth = "40px";
-                imgs[i].style.maxHeight = "40px";
-                imgs[i].style.margin = "2px";
-                imgs[i].style.verticalAlign = "middle";
-                imgs[i].style.border = "1px solid black";
+                upgradeImage(imgs[i]);
             }
             return h;
         }

@@ -34,18 +34,21 @@ func respondFile(r Request, perm session.Permissions,
 	if ! strings.HasPrefix(r.Path, "/file/") { return notFound() }
 	r.Path = r.Path[6:]
 
-	if strings.HasPrefix(r.Path, "admin") && (!perm.IsAdmin()) {
-		return notFound()
-	}
-
 	if util.ValidFileName(r.Path) {
+		cache := "max-age=86400"
+		if strings.HasPrefix(r.Path, "admin") {
+			if (!perm.IsAdmin()) {
+				return notFound()
+			}
+			cache = "no-cache"
+		}
 		d := data.ByPath("http/"+r.Path)
 		if len(d) < 1 { return notFound() }
 		return Response {
 			Code: 200,
 			Headers: map[string]string {
 				"Content-Type": mime,
-				"Cache-Control": "max-age=86400",
+				"Cache-Control": cache,
 			},
 			Body: d,
 		}
