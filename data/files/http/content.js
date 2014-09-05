@@ -373,6 +373,30 @@
         $("article").appendChild(para(submit));
     }
 
+    function subPageLi(db, pid, lang) {
+        var p, tit, li, a, img;
+        p = db.page(pid);
+        if (!p) { return; }
+        tit = p.prop("title_" + lang);
+        if (tit.length < 1) { return; }
+        li = document.createElement("li");
+        a = document.createElement("a");
+        a.href = "/" + pid + "/" + lang;
+        li.appendChild(a);
+        clickable(a, function (ev) {
+            onPageChanged.fire(pid + "/" + lang);
+            if (ev) { ev.preventDefault(); }
+            return false;
+        });
+        if (p.hasFile("icon.jpg")) {
+            img = document.createElement("img");
+            img.src = "/file/" + pid + "/icon.jpg";
+            a.appendChild(img);
+        }
+        a.appendChild(span(tit));
+        return li;
+    }
+
     function makeImageZoomable(img) {
         if (img.onclick) {
             return;
@@ -501,22 +525,10 @@
             return c.prop("title_" + lang);
         });
         children.forEach(function (c) {
-            var id = c.id(), ctit = c.prop("title_" + lang), li, a, img;
-            if (ctit.length < 1) { return; }
-            li = document.createElement("li");
-            a = document.createElement("a");
-            a.href = "/" + id + "/" + lang;
-            li.appendChild(a);
-            clickable(a, function () {
-                onPageChanged.fire(id + "/" + lang);
-            });
-            if (c.hasFile("icon.jpg")) {
-                img = document.createElement("img");
-                img.src = "/file/" + id + "/icon.jpg";
-                a.appendChild(img);
+            var sub = subPageLi(db, c.id(), lang);
+            if (sub) {
+                $("subs").appendChild(sub);
             }
-            a.appendChild(span(ctit));
-            $("subs").appendChild(li);
         });
     }
 
