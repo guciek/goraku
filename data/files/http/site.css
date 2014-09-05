@@ -47,7 +47,7 @@ div#articleend, div#article h1, div#article h2,
 	div#article pre, div#article p { clear: left }
 
 ul#subs li { display: inline-block; vertical-align: top;
-	width: 145px; padding: 0 13px 20px 0; overflow: hidden }
+	width: 147px; padding: 0 11px 20px 0; overflow: hidden }
 ul#subs img { display: block; border: 1px solid #fff;
 	text-decoration: none; margin-bottom: 4px }
 ul#subs a:hover img { opacity: 0.6 }
