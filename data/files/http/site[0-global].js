@@ -7,6 +7,7 @@ var $,
     makeEvent,
     onDbChanged,
     onPageChanged,
+    onArticleLoaded,
     getDb,
     getPage,
     getLang;
@@ -132,6 +133,8 @@ var $,
     onDbChanged = makeEvent();
 
     onPageChanged = makeEvent();
+
+    onArticleLoaded = makeEvent();
 
     (function () {
         var db, page, lang;
