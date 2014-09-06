@@ -1569,7 +1569,7 @@
             }
         }
         function addtag(id) {
-            var opt = div(), cb;
+            var opt = div(), cb, label;
             opt.style.display = "inline-block";
             opt.style.marginRight = "10px";
             opt.style.overflow = "hidden";
@@ -1578,13 +1578,17 @@
             cb.onchange = cb.onkeyup = updValue;
             cb.style.marginRight = "5px";
             cb.style.verticalAlign = "middle";
+            cb.id = "cb_"+Math.random();
             initialTags.forEach(function (tag) {
                 if (tag === id) {
                     cb.checked = true;
                 }
             });
             opt.appendChild(cb);
-            opt.appendChild(span(id));
+            label = document.createElement("label");
+            label.textContent = id;
+            label.htmlFor = cb.id;
+            opt.appendChild(label);
             e.appendChild(opt);
             checkboxes[id] = cb;
         }
@@ -1688,6 +1692,7 @@
                     }
                 };
             }
+            checkChanged();
             inp.style.width = "260px";
             inp.style.display = "inline-block";
             d.appendChild(inp);
