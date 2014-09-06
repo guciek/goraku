@@ -2,8 +2,6 @@
 (function () {
     "use strict";
 
-    var error = showError;
-
     function sortByFunc(arr, func) {
         var sorted = [];
         arr.forEach(function (a) {
@@ -37,7 +35,7 @@
                     onresponse("", "HTTP error");
                 }
             } catch (err) {
-                error(err);
+                showError(err);
             }
         };
         req.send(data);
@@ -139,44 +137,23 @@
         };
     }
 
-    function initPageEvents() {
-        function changePageFromBrowser() {
-            onPageChanged.fire(
-                String(window.location.pathname).substring(1),
-                true
-            );
-        }
-        changePageFromBrowser();
-        window.onpopstate = changePageFromBrowser;
-        onPageChanged.add(function (newPath, browserInitiated) {
-            if (browserInitiated) { return; }
-            newPath = "/" + newPath;
-            if (String(window.location.pathname) === newPath) { return; }
-            window.history.pushState({}, newPath, newPath);
-        });
-        onPageChanged.add(function () {
-            window.scroll(0, 0);
-        });
-    }
-
     function dbLoadStart() {
         postRequest(
             "/db",
             "getdb;" + String(new Date().getTime()),
             function (d) {
                 if ((d.length < 1) || (d[0] !== "{")) {
-                    error("Could not load database!");
+                    showError("Could not load database!");
                     return;
                 }
                 try {
                     d = eval("(" + d + ")");
                     if (!d) { throw "empty"; }
                 } catch (err) {
-                    error("Invalid database data!");
+                    showError("Invalid database data!");
                     return;
                 }
                 onDbChanged.fire(makeDbWrapper(d));
-                initPageEvents();
             }
         );
     }
@@ -184,6 +161,6 @@
     try {
         dbLoadStart();
     } catch (err) {
-        error(err);
+        showError(err);
     }
 }());

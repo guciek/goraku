@@ -1,5 +1,10 @@
 
-var showError, onDbChanged, onPageChanged;
+var showError,
+    onDbChanged,
+    onPageChanged,
+    getDb,
+    getPage,
+    getLang;
 
 Array.prototype.forEach = function (f) {
     "use strict";
@@ -94,6 +99,30 @@ Array.prototype.forEach = function (f) {
         showError = error;
         onDbChanged = makeEvent();
         onPageChanged = makeEvent();
+        (function () {
+            var db, page, lang;
+            onDbChanged.add(function (v) {
+                if (!v) { return; }
+                db = v;
+            });
+            onPageChanged.add(function (v) {
+                if (!v) { return; }
+                page = v;
+                v = v.split("/");
+                if (v.length !== 2) { return; }
+                if (!v[1]) { return; }
+                lang = v[1];
+            });
+            getDb = function () {
+                return db;
+            };
+            getPage = function () {
+                return page;
+            };
+            getLang = function () {
+                return lang;
+            };
+        }());
     } catch (err) {
         error(err);
     }

@@ -1,0 +1,195 @@
+
+(function () {
+    "use strict";
+
+    var loggedUser;
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    function element(tag, content) {
+        var e = document.createElement(String(tag));
+        if (content) {
+            if (typeof content === "object") {
+                e.appendChild(content);
+            } else {
+                e.textContent = String(content);
+            }
+        }
+        return e;
+    }
+
+    function clickable(e, action) {
+        e.onclick = function (ev) {
+            try {
+                action();
+            } catch (err) {
+                showError(err);
+            }
+            if (ev) { ev.preventDefault(); }
+            return false;
+        };
+        e.style.cursor = "pointer";
+        return e;
+    }
+
+    function input_text(action) {
+        var e = document.createElement("input");
+        e.type = "text";
+        if (action) {
+            e.onkeypress = function (ev) {
+                ev = ev || window.event;
+                var c = ev.which || ev.keyCode;
+                if (c !== 13) { return true; }
+                try {
+                    action();
+                } catch (err) {
+                    showError(err);
+                }
+                if (ev) { ev.preventDefault(); }
+                return false;
+            };
+        }
+        return e;
+    }
+
+    function animateFadeOutRemove(e) {
+        var opacity = 1;
+        function step() {
+            opacity -= 0.03;
+            if (opacity <= 0.05) {
+                e.parentNode.removeChild(e);
+            } else {
+                setTimeout(step, 25);
+                e.style.opacity = opacity;
+            }
+        }
+        setTimeout(step, 25);
+    }
+
+    function input_submit(tit, action) {
+        var active = true, e = document.createElement("input");
+        e.type = "submit";
+        e.value = String(tit);
+        e.style.cursor = "pointer";
+        e.onclick = function (ev) {
+            try {
+                if (active) {
+                    active = false;
+                    e.style.cursor = "default";
+                    try { e.style.opacity = 0.5; } catch (ignore) {}
+                    action(function () {
+                        active = true;
+                        e.style.cursor = "pointer";
+                        try { e.style.opacity = 1; } catch (ignore) {}
+                    });
+                }
+            } catch (err) {
+                showError(err);
+            }
+            if (ev) { ev.preventDefault(); }
+            return false;
+        };
+        return e;
+    }
+
+    function postRequest(url, data, onresponse) {
+        var req = new XMLHttpRequest();
+        req.open("POST", url, true);
+        req.setRequestHeader("Content-Type", "application/octet-stream");
+        req.onreadystatechange = function () {
+            var status = Number(req.status);
+            if (Number(req.readyState) < 4) { return; }
+            try {
+                if (status === 200) {
+                    onresponse(String(req.responseText));
+                } else if (status > 0) {
+                    onresponse("", "HTTP code " + status);
+                } else {
+                    onresponse("", "HTTP error");
+                }
+            } catch (err) {
+                showError(err);
+            }
+        };
+        req.send(data);
+    }
+
+    function addLabel(b, label) {
+        var p = element("p", label + ":");
+        p.appendChild(document.createElement("br"));
+        p.appendChild(b);
+        return p;
+    }
+
+    function loginFailedMsg(msg) {
+        var e = element("div", msg || "Login failed");
+        e.className = "jswarning";
+        $("leftcolumn").appendChild(e);
+        setTimeout(function () {
+            animateFadeOutRemove(e);
+        }, 3000);
+    }
+
+    function addContentLogin() {
+        var user, pass, submit;
+        $("title_text").textContent = "Login";
+        if (loggedUser) {
+            $("article").appendChild(
+                element("p", "You are now logged in as '" + loggedUser + "'.")
+            );
+            return;
+        }
+        submit = input_submit("Login", function (reactivate) {
+            var u = user.value, p = pass.value;
+            postRequest(
+                "/login",
+                u + ":" + p,
+                function (d, err) {
+                    if ((d !== "OK") && (d !== "ADMIN")) {
+                        loginFailedMsg(err);
+                        reactivate();
+                        user.value = "";
+                        pass.value = "";
+                        return;
+                    }
+                    loggedUser = u;
+                    $("article").textContent = "";
+                    $("article").appendChild(
+                        element("p", "You are now logged in as '" + u + "'.")
+                    );
+                    if (d === "ADMIN") {
+                        var e = document.createElement("script");
+                        e.src = "/file/admin.js";
+                        document.body.appendChild(e);
+                    }
+                }
+            );
+        });
+        user = input_text(submit.onclick);
+        user.style.width = "40%";
+        pass = input_text(submit.onclick);
+        pass.type = "password";
+        pass.style.width = "40%";
+        $("article").appendChild(addLabel(user, "User"));
+        $("article").appendChild(addLabel(pass, "Password"));
+        $("article").appendChild(element("p", submit));
+    }
+
+    try {
+        $("footer").appendChild(clickable(
+            element("span", "login"),
+            function () {
+                onPageChanged.fire("login");
+            }
+        ));
+        onPageChanged.add(function (page) {
+            if (page === "login") {
+                addContentLogin();
+            }
+        });
+    } catch (err) {
+        showError(err);
+    }
+}());
