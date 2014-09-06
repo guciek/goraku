@@ -1,26 +1,60 @@
 
-var showError,
+var $,
+    element,
+    clickable,
+    showError,
+    makeSet,
+    makeEvent,
     onDbChanged,
     onPageChanged,
     getDb,
     getPage,
     getLang;
 
-Array.prototype.forEach = function (f) {
-    "use strict";
-    var i, len = this.length;
-    if (typeof f !== "function") {
-        throw new TypeError();
-    }
-    for (i = 0; i < len; i += 1) {
-        if (this.hasOwnProperty(i)) {  f(this[i], i);  }
-    }
-};
-
 (function () {
     "use strict";
 
-    function error(msg) {
+    Array.prototype.forEach = function (f) {
+        var i, len = this.length;
+        if (typeof f !== "function") {
+            throw new TypeError();
+        }
+        for (i = 0; i < len; i += 1) {
+            if (this.hasOwnProperty(i)) {  f(this[i], i);  }
+        }
+    };
+
+    $ = function (id) {
+        return document.getElementById(id);
+    };
+
+    element = function (tag, content) {
+        var e = document.createElement(String(tag));
+        if (content) {
+            if (typeof content === "object") {
+                e.appendChild(content);
+            } else {
+                e.textContent = String(content);
+            }
+        }
+        return e;
+    };
+
+    clickable = function (e, action) {
+        e.onclick = function (ev) {
+            try {
+                action();
+            } catch (err) {
+                showError(err);
+            }
+            if (ev) { ev.preventDefault(); }
+            return false;
+        };
+        e.style.cursor = "pointer";
+        return e;
+    };
+
+    showError = function (msg) {
         try {
             var e = document.createElement("div"),
                 lc = document.getElementById("leftcolumn");
@@ -30,9 +64,9 @@ Array.prototype.forEach = function (f) {
         } catch (err) {
             alert("Error: " + msg);
         }
-    }
+    };
 
-    function makeSet() {
+    makeSet = function () {
         var es = [];
         return {
             add: function (e) {
@@ -75,9 +109,9 @@ Array.prototype.forEach = function (f) {
                 }
             }
         };
-    }
+    };
 
-    function makeEvent() {
+    makeEvent = function () {
         var callbacks = makeSet();
         return {
             add: callbacks.add,
@@ -88,42 +122,39 @@ Array.prototype.forEach = function (f) {
                     try {
                         callback(p1, p2, p3);
                     } catch (err) {
-                        error(err);
+                        showError(err);
                     }
                 });
             }
         };
-    }
+    };
 
-    try {
-        showError = error;
-        onDbChanged = makeEvent();
-        onPageChanged = makeEvent();
-        (function () {
-            var db, page, lang;
-            onDbChanged.add(function (v) {
-                if (!v) { return; }
-                db = v;
-            });
-            onPageChanged.add(function (v) {
-                if (!v) { return; }
-                page = v;
-                v = v.split("/");
-                if (v.length !== 2) { return; }
-                if (!v[1]) { return; }
-                lang = v[1];
-            });
-            getDb = function () {
-                return db;
-            };
-            getPage = function () {
-                return page;
-            };
-            getLang = function () {
-                return lang;
-            };
-        }());
-    } catch (err) {
-        error(err);
-    }
+    onDbChanged = makeEvent();
+
+    onPageChanged = makeEvent();
+
+    (function () {
+        var db, page, lang;
+        onDbChanged.add(function (v) {
+            if (!v) { return; }
+            db = v;
+        });
+        onPageChanged.add(function (v) {
+            if (!v) { return; }
+            page = v;
+            v = v.split("/");
+            if (v.length !== 2) { return; }
+            if (!v[1]) { return; }
+            lang = v[1];
+        });
+        getDb = function () {
+            return db;
+        };
+        getPage = function () {
+            return page;
+        };
+        getLang = function () {
+            return lang;
+        };
+    }());
 }());

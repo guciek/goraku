@@ -8,69 +8,6 @@
         iconSize = { width: 145, height: 110 },
         error = showError;
 
-    function makeSet() {
-        var es = [];
-        return {
-            add: function (e) {
-                var i;
-                for (i = 0; i < es.length; i += 1) {
-                    if (es[i] === e) { return false; }
-                }
-                es.push(e);
-                return true;
-            },
-            remove: function (e) {
-                var i;
-                for (i = 0; i < es.length; i += 1) {
-                    if (es[i] === e) {
-                        es.splice(i, 1);
-                        return true;
-                    }
-                }
-                return false;
-            },
-            removeAll: function () {
-                es = [];
-            },
-            contains: function (e) {
-                var i;
-                for (i = 0; i < es.length; i += 1) {
-                    if (es[i] === e) {
-                        return true;
-                    }
-                }
-                return false;
-            },
-            forEach: function (f) {
-                var i, copy = [];
-                for (i = 0; i < es.length; i += 1) {
-                    copy.push(es[i]);
-                }
-                for (i = 0; i < copy.length; i += 1) {
-                    f(copy[i]);
-                }
-            }
-        };
-    }
-
-    function makeEvent() {
-        var callbacks = makeSet();
-        return {
-            add: callbacks.add,
-            remove: callbacks.remove,
-            removeAll: callbacks.removeAll,
-            fire: function (p1, p2, p3) {
-                callbacks.forEach(function (callback) {
-                    try {
-                        callback(p1, p2, p3);
-                    } catch (err) {
-                        error(err);
-                    }
-                });
-            }
-        };
-    }
-
     function sortByFunc(arr, func) {
         var sorted = [];
         arr.forEach(function (a) {
@@ -149,20 +86,8 @@
         return e;
     }
 
-    function span(content) {
-        var e = document.createElement("span");
-        if (content) {
-            if (typeof content === "object") {
-                e.appendChild(content);
-            } else {
-                e.textContent = String(content);
-            }
-        }
-        return e;
-    }
-
     function link(tit, action) {
-        var e = span(tit);
+        var e = element("span", tit);
         e.style.color = "#005";
         e.onmouseout = function () {
             e.style.color = "#005";
@@ -1330,43 +1255,43 @@
             return l;
         }
         var panel = div(), line = div();
-        line.appendChild(span("Paragraph: "));
+        line.appendChild(element("span", "Paragraph: "));
         line.appendChild(btn(" regular ", "formatBlock", "p"));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(btn(" code ", "formatBlock", "pre"));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(btn(" header ", "formatBlock", "h1"));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(btn(" subheader ", "formatBlock", "h2"));
         line.style.marginBottom = "10px";
         panel.appendChild(line);
         line = div();
-        line.appendChild(span("Text style: "));
+        line.appendChild(element("span", "Text style: "));
         line.appendChild(btn(" regular ", "removeFormat", false));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(btn(" bold ", "bold", false));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(btn(" italic ", "italic", false));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(btn(" superscript ", "superscript", false));
         line.style.marginBottom = "10px";
         panel.appendChild(line);
         line = div();
-        line.appendChild(span("Insert: "));
+        line.appendChild(element("span", "Insert: "));
         line.appendChild(link(" image ", function () {
             openPopupWindow(
                 "Insert Image",
                 textEditor_insertImage(append_html, pid)
             );
         }));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(link(" link to page ", function () {
             openPopupWindow(
                 "Insert Link to Page",
                 textEditor_insertLinkToPage(append_html)
             );
         }));
-        line.appendChild(span(" | "));
+        line.appendChild(element("span", " | "));
         line.appendChild(link(" link to url ", function () {
             openPopupWindow(
                 "Insert Link to URL",
@@ -1797,20 +1722,20 @@
             p.forEachProp(function (k) {
                 if (k.substring(0, 6) !== "title_") { return; }
                 k = k.substring(6);
-                links.appendChild(span(" |"));
+                links.appendChild(element("span", " |"));
                 links.appendChild(link(
                     " edit " + k,
                     function () { showEditContent(pid, k); }
                 ));
             });
             if (pid !== "index") {
-                links.appendChild(span(" |"));
+                links.appendChild(element("span", " |"));
                 links.appendChild(link(
                     " move",
                     function () { showPageMove(pid); }
                 ));
             }
-            links.appendChild(span(" |"));
+            links.appendChild(element("span", " |"));
             links.appendChild(link(
                 " new page",
                 function () {
@@ -1821,7 +1746,7 @@
                 }
             ));
             if (isDelOptionEnabled(pid)) {
-                links.appendChild(span(" | "));
+                links.appendChild(element("span", " | "));
                 links.appendChild(link(
                     " delete",
                     function () { showPageDel(pid); }
@@ -1847,12 +1772,12 @@
         e.style.resize = "both";
         e.style.background = "#fff";
         function pageOptions(p) {
-            var s = span(p.id());
+            var s = element("span", p.id());
             s.style.fontWeight = "bold";
             if (p.prop("type")) {
                 s.style.color = stringColorCode(p.prop("type"));
             }
-            s = span(s);
+            s = element("span", s);
             p.forEachProp(function (k) {
                 if (k.substring(0, 6) !== "title_") { return; }
                 k = k.substring(6);

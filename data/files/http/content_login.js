@@ -4,38 +4,8 @@
 
     var loggedUser;
 
-    function $(id) {
-        return document.getElementById(id);
-    }
-
-    function element(tag, content) {
-        var e = document.createElement(String(tag));
-        if (content) {
-            if (typeof content === "object") {
-                e.appendChild(content);
-            } else {
-                e.textContent = String(content);
-            }
-        }
-        return e;
-    }
-
-    function clickable(e, action) {
-        e.onclick = function (ev) {
-            try {
-                action();
-            } catch (err) {
-                showError(err);
-            }
-            if (ev) { ev.preventDefault(); }
-            return false;
-        };
-        e.style.cursor = "pointer";
-        return e;
-    }
-
     function input_text(action) {
-        var e = document.createElement("input");
+        var e = element("input");
         e.type = "text";
         if (action) {
             e.onkeypress = function (ev) {
@@ -69,7 +39,7 @@
     }
 
     function input_submit(tit, action) {
-        var active = true, e = document.createElement("input");
+        var active = true, e = element("input");
         e.type = "submit";
         e.value = String(tit);
         e.style.cursor = "pointer";
@@ -118,7 +88,7 @@
 
     function addLabel(b, label) {
         var p = element("p", label + ":");
-        p.appendChild(document.createElement("br"));
+        p.appendChild(element("br"));
         p.appendChild(b);
         return p;
     }
@@ -160,7 +130,7 @@
                         element("p", "You are now logged in as '" + u + "'.")
                     );
                     if (d === "ADMIN") {
-                        var e = document.createElement("script");
+                        var e = element("script");
                         e.src = "/file/admin.js";
                         document.body.appendChild(e);
                     }

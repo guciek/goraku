@@ -2,36 +2,6 @@
 (function () {
     "use strict";
 
-    function $(id) {
-        return document.getElementById(id);
-    }
-
-    function element(tag, content) {
-        var e = document.createElement(String(tag));
-        if (content) {
-            if (typeof content === "object") {
-                e.appendChild(content);
-            } else {
-                e.textContent = String(content);
-            }
-        }
-        return e;
-    }
-
-    function clickable(e, action) {
-        e.onclick = function (ev) {
-            try {
-                action();
-            } catch (err) {
-                showError(err);
-            }
-            if (ev) { ev.preventDefault(); }
-            return false;
-        };
-        e.style.cursor = "pointer";
-        return e;
-    }
-
     function animateHeightUnfold(e) {
         var h = 1;
         e.style.overflow = "hidden";

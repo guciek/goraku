@@ -2,32 +2,6 @@
 (function () {
     "use strict";
 
-    function $(id) {
-        return document.getElementById(id);
-    }
-
-    function para(content) {
-        var e = document.createElement("p");
-        if (content) {
-            e.textContent = String(content);
-        }
-        return e;
-    }
-
-    function clickable(e, action) {
-        e.onclick = function (ev) {
-            try {
-                action();
-            } catch (err) {
-                showError(err);
-            }
-            if (ev) { ev.preventDefault(); }
-            return false;
-        };
-        e.style.cursor = "pointer";
-        return e;
-    }
-
     function upgradeLangLink(e) {
         var newlang = String(e.href).split("/"), active = true;
         newlang = newlang[newlang.length - 1];
@@ -106,22 +80,25 @@
         $("subs").textContent = "";
     }
 
+    function onUpdate() {
+        clearContent();
+        var lang = getLang();
+        if (lang) {
+            document.body.className = "lang_" + lang;
+        }
+        setTimeout(function () {
+            var tit = $("title_text").textContent;
+            if (tit) {
+                window.document.title = tit;
+            }
+        }, 20);
+    }
+
     try {
         clearContent();
-        $("article").appendChild(para("Loading database..."));
-        onPageChanged.add(function () {
-            clearContent();
-            var lang = getLang();
-            if (lang) {
-                document.body.className = "lang_" + lang;
-            }
-            setTimeout(function () {
-                var tit = $("title_text").textContent;
-                if (tit) {
-                    window.document.title = tit;
-                }
-            }, 20);
-        });
+        $("article").appendChild(element("p", "Loading database..."));
+        onPageChanged.add(onUpdate);
+        onDbChanged.add(onUpdate);
         (function () {
             var initialized = false;
             onDbChanged.add(function () {
