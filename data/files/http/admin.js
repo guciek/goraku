@@ -432,6 +432,69 @@
         }());
     }
 
+    function stringColorCode(s) {
+        function hash() {
+            var i, c, sum = 0, prod = 1;
+            for (i = 0; i < s.length; i += 1) {
+                c = s.charCodeAt(i);
+                sum += c;
+                prod = (prod * (c + 11)) % 1527827;
+            }
+            return (sum + prod + 4545) % 1000000;
+        }
+        function hsv2rgb(i) {
+            i.h -= Math.floor(i.h);
+            i.h *= 6.0;
+            if (i.s < 0) { i.s = 0; }
+            if (i.s > 1) { i.s = 1; }
+            if (i.v < 0) { i.v = 0; }
+            if (i.v > 1) { i.v = 1; }
+            var f = i.h - Math.floor(i.h), r, g, b;
+            switch (Math.floor(i.h)) {
+            case 0:
+                r = 1;
+                g = 1 - (1 - f) * i.s;
+                b = 1 - i.s;
+                break;
+            case 1:
+                r = 1 - i.s * f;
+                g = 1;
+                b = 1 - i.s;
+                break;
+            case 2:
+                r = 1 - i.s;
+                g = 1;
+                b = 1 - (1 - f) * i.s;
+                break;
+            case 3:
+                r = 1 - i.s;
+                g = 1 - i.s * f;
+                b = 1;
+                break;
+            case 4:
+                r = 1 - (1 - f) * i.s;
+                g = 1 - i.s;
+                b = 1;
+                break;
+            default:
+                r = 1;
+                g = 1 - i.s;
+                b = 1 - i.s * f;
+            }
+            r *= i.v;
+            g *= i.v;
+            b *= i.v;
+            return { r: r, g: g, b: b };
+        }
+        function color() {
+            var hue = (hash() % 100) / 100,
+                c = hsv2rgb({h: hue, s: 1, v: 1});
+            return "rgb(" + Math.round(c.r * 255) + "," +
+                Math.round(c.g * 255) + "," + Math.round(c.b * 255) + ")";
+        }
+        return color();
+    }
+
     function makeDraggable(subject) {
         var onstart = makeEvent(),
             onmove = makeEvent(),
@@ -1778,6 +1841,11 @@
         e.style.background = "#fff";
         function pageOptions(p) {
             var s = span(p.id());
+            s.style.fontWeight = "bold";
+            if (p.prop("type")) {
+                s.style.color = stringColorCode(p.prop("type"));
+            }
+            s = span(s);
             p.forEachProp(function (k) {
                 if (k.substring(0, 6) !== "title_") { return; }
                 k = k.substring(6);
