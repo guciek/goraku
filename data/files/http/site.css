@@ -54,6 +54,6 @@ ul#subs li { display: inline-block; vertical-align: top;
 ul#subs img { display: block; border: 1px solid #fff;
 	text-decoration: none; margin-bottom: 4px }
 
-div#footer { text-align: center; padding-bottom: 20px }
+div#footer { text-align: center; padding: 20px 0 }
 div#footer, div#footer * { font-size: 11px; color: #6f5e50 }
 div#footer span { margin: 8px 6px }
