@@ -28,14 +28,15 @@ div#header { padding: 30px 41px }
 div#header * { color: #88a; font-size: 50px; text-decoration: none }
 
 div#rightcolumn { font-size: 12px; float: right; width: 185px;
-	overflow: hidden; margin-right: 41px }
+	overflow: hidden; margin-right: 41px; margin-bottom: 31px }
 div#rightcolumn * { font-size: 12px }
 
 div#langs { margin-bottom: 20px }
 div#langs a { text-decoration: none }
 div#langs img { border: 1px solid #fff }
 
-div#leftcolumn { width: 642px; overflow: hidden; margin-left: 41px }
+div#leftcolumn { width: 642px; overflow: hidden;
+	margin-left: 41px; margin-bottom: 11px }
 
 div#title span { float: left; margin-top: 3px; padding-right: 2px }
 div#title span:after { content:" » " }
@@ -49,11 +50,13 @@ div#article img { margin: 0 11px 11px 0; float: left;
 	max-width: 640px; max-height: 480px; border: 1px solid #fff }
 div#article h1, div#article h2, div#article pre, div#article p { clear: left }
 
+ul#subs { margin-top: 30px }
 ul#subs li { display: inline-block; vertical-align: top;
-	width: 147px; margin: 30px 11px 0 0; overflow: hidden }
+	width: 147px; margin: 0px 11px 30px 0; overflow: hidden }
 ul#subs img { display: block; border: 1px solid #fff;
 	text-decoration: none; margin-bottom: 4px }
 
-div#footer { text-align: center; padding: 20px 0 }
+div#footer { margin: 0 auto; width: 950px;
+	text-align: center; padding-bottom: 20px }
 div#footer, div#footer * { font-size: 11px; color: #6f5e50 }
 div#footer span { margin: 8px 6px }
