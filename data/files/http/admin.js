@@ -440,7 +440,7 @@
                 sum += c;
                 prod = (prod * (c + 11)) % 1527827;
             }
-            return (sum + prod + 4545) % 1000000;
+            return (sum * 13 + prod * 4545) % 1000000;
         }
         function hsv2rgb(i) {
             i.h -= Math.floor(i.h);
@@ -487,8 +487,10 @@
             return { r: r, g: g, b: b };
         }
         function color() {
-            var hue = (hash() % 100) / 100,
-                c = hsv2rgb({h: hue, s: 1, v: 1});
+            var h = hash(),
+                hue = (h % 100) / 100,
+                val = (Math.floor(h / 100) % 100) / 200,
+                c = hsv2rgb({h: hue, s: 1, v: 1 - val});
             return "rgb(" + Math.round(c.r * 255) + "," +
                 Math.round(c.g * 255) + "," + Math.round(c.b * 255) + ")";
         }
