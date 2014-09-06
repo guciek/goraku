@@ -1873,9 +1873,7 @@
             var parent, lines = {};
             list.textContent = "";
             db.forEachPage(function (p) {
-                var line = div(pageOptions(p));
-                line.style.marginBottom = "10px";
-                lines[p.id()] = line;
+                lines[p.id()] = div(pageOptions(p));
             });
             Object.keys(lines).forEach(function (l) {
                 parent = db.page(l).parent();
@@ -1884,6 +1882,7 @@
                     lines[l].style.marginLeft = "30px";
                 } else {
                     list.appendChild(lines[l]);
+                    lines[l].style.marginBottom = "20px";
                 }
             });
         }
