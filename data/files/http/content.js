@@ -288,6 +288,14 @@
         });
     }
 
+    function makePageLink(a, page) {
+        clickable(a, function () {
+            window.scroll(0, 0);
+            onPageChanged.fire(page);
+        });
+        return a;
+    }
+
     function upgradeLink(db, a) {
         function markInvalid(a) {
             a.style.background = "#f00";
@@ -309,9 +317,7 @@
             markInvalid(a);
             return;
         }
-        clickable(a, function () {
-            onPageChanged.fire(href[0] + "/" + href[1]);
-        });
+        makePageLink(a, href[0] + "/" + href[1]);
     }
 
     function addContentLoginForm() {
@@ -383,11 +389,7 @@
         a = document.createElement("a");
         a.href = "/" + pid + "/" + lang;
         li.appendChild(a);
-        clickable(a, function (ev) {
-            onPageChanged.fire(pid + "/" + lang);
-            if (ev) { ev.preventDefault(); }
-            return false;
-        });
+        makePageLink(a, pid + "/" + lang);
         if (p.hasFile("icon.jpg")) {
             img = document.createElement("img");
             img.src = "/file/" + pid + "/icon.jpg";
@@ -572,11 +574,7 @@
         $("article").textContent = "";
         $("subs").textContent = "";
         $("article").appendChild(para("Loading..."));
-        $("footer").appendChild(
-            clickable(span("login"), function () {
-                onPageChanged.fire("[login]");
-            })
-        );
+        $("footer").appendChild(makePageLink(span("login"), "[login]"));
         function upgradeLangLink(e) {
             var newlang = String(e.href).split("/"), active = true;
             newlang = newlang[newlang.length - 1];

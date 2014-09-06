@@ -1578,7 +1578,7 @@
             cb.onchange = cb.onkeyup = updValue;
             cb.style.marginRight = "5px";
             cb.style.verticalAlign = "middle";
-            cb.id = "cb_"+Math.random();
+            cb.id = "cb_" + Math.random();
             initialTags.forEach(function (tag) {
                 if (tag === id) {
                     cb.checked = true;
