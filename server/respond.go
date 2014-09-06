@@ -42,6 +42,15 @@ func pageSubs(pm pgman.PageManager, parent pgman.Page, lang string) []byte {
 	return buf.Bytes()
 }
 
+func pageParent(pm pgman.PageManager, child pgman.Page, lang string) []byte {
+	p := pm.ById(child.Property("parent"))
+	if p.Id == nil { return nil }
+	title := p.Property("title_"+lang)
+	if len(title) < 1 { return nil }
+	return []byte("<span><a href=\"/"+p.Id()+"/"+lang+"\">"+
+		util.StripHtml(title)+"</a></span>")
+}
+
 func parseTemplate(t []byte, tags map[string][]byte) ([]byte, error) {
 	var buf bytes.Buffer
 	for {
@@ -96,6 +105,7 @@ func respond(r Request, perm session.Permissions,
 			"TITLE": []byte(util.StripHtml(title)),
 			"CONTENT": page.File(lang+".html"),
 			"SUBS": pageSubs(pm, page, lang),
+			"PARENT": pageParent(pm, page, lang),
 		},
 	)
 

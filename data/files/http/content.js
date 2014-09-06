@@ -32,9 +32,15 @@
         return e;
     }
 
-    function span(text) {
+    function span(content) {
         var e = document.createElement("span");
-        if (text) { e.textContent = text; }
+        if (content) {
+            if (typeof content === "object") {
+                e.appendChild(content);
+            } else {
+                e.textContent = String(content);
+            }
+        }
         return e;
     }
 
@@ -322,7 +328,7 @@
 
     function addContentLoginForm() {
         var user, pass, submit;
-        $("title").textContent = "Login";
+        $("title_text").textContent = "Login";
         if (loggedUser) {
             $("article").appendChild(
                 para("You are now logged in as '" + loggedUser + "'.")
@@ -496,8 +502,20 @@
                 upgradeImage(imgs[i]);
             }
         }
+        function addParentLink() {
+            var parent = p.parent(),
+                a = document.createElement("a"),
+                parent_tit;
+            if (!parent) { return; }
+            parent_tit = parent.prop("title_" + lang);
+            if (!parent_tit) { return; }
+            a.textContent = parent_tit;
+            makePageLink(a, parent.id() + "/" + lang);
+            $("title_path").appendChild(span(a));
+        }
         if (!tit) { return; }
-        $("title").textContent = tit;
+        $("title_text").textContent = tit;
+        addParentLink();
         $("article").appendChild(articleContent);
         if (p.hasFile(lang + ".html")) {
             articleContent.appendChild(para("Loading..."));
@@ -539,7 +557,8 @@
         if (!path) { return; }
         $("title").style.display = (path.substring(0, 6) === "index/") ?
                 "none" : "block";
-        $("title").textContent = "";
+        $("title_text").textContent = "";
+        $("title_path").textContent = "";
         $("article").textContent = "";
         $("subs").textContent = "";
         if (path === "[login]") {
@@ -552,7 +571,7 @@
             addContentPage(db, path[0], path[1]);
             document.body.className = "lang_" + path[1];
         }
-        window.document.title = $("title").textContent;
+        window.document.title = $("title_text").textContent;
     }
 
     function initContent() {

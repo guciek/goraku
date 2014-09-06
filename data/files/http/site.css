@@ -36,6 +36,9 @@ div#langs img { border: 1px solid #fff }
 
 div#leftcolumn { width: 642px; overflow: hidden; margin-left: 41px }
 
+div#title span { float: left; margin-top: 3px; padding-right: 2px }
+div#title span:after { content:" » " }
+
 div#article { line-height: 18px }
 
 div.jswarning { font-weight: bold; border: 1px solid #800;
@@ -43,8 +46,7 @@ div.jswarning { font-weight: bold; border: 1px solid #800;
 
 div#article img { margin: 0 11px 11px 0; float: left;
 	max-width: 640px; max-height: 480px; border: 1px solid #fff }
-div#articleend, div#article h1, div#article h2,
-	div#article pre, div#article p { clear: left }
+div#article h1, div#article h2, div#article pre, div#article p { clear: left }
 
 ul#subs li { display: inline-block; vertical-align: top;
 	width: 147px; padding: 0 11px 20px 0; overflow: hidden }
