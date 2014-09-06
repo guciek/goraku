@@ -42,18 +42,22 @@ def codeForFiles(fdata):
 	return "".join(result)
 
 def generateForDirectory(directory):
-	fdata = dict()
+	paths = []
 	for root, dirs, files in os.walk(directory):
 		for f in files:
 			fdiskpath = root+"/"+f
-			add_path = fdiskpath[len(directory)+1:]
-			add_path = re.sub("\[[^\]]+\]", "", add_path)
-			with open(fdiskpath, "rb") as f:
-				data = f.read()
-				if add_path in fdata:
-					fdata[add_path] += data
-				else:
-					fdata[add_path] = data
+			paths.append(fdiskpath)
+	paths.sort()
+	fdata = dict()
+	for fdiskpath in paths:
+		add_path = fdiskpath[len(directory)+1:]
+		add_path = re.sub("\[[^\]]+\]", "", add_path)
+		with open(fdiskpath, "rb") as f:
+			data = f.read()
+			if add_path in fdata:
+				fdata[add_path] += data
+			else:
+				fdata[add_path] = data
 	return codeForFiles(fdata)
 
 if __name__ == "__main__":
