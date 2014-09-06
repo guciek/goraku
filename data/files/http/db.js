@@ -150,11 +150,12 @@
         window.onpopstate = changePageFromBrowser;
         onPageChanged.add(function (newPath, browserInitiated) {
             if (browserInitiated) { return; }
-            var path = newPath.split("/");
-            if (path.length !== 2) { return; }
             newPath = "/" + newPath;
             if (String(window.location.pathname) === newPath) { return; }
             window.history.pushState({}, newPath, newPath);
+        });
+        onPageChanged.add(function () {
+            window.scroll(0, 0);
         });
     }
 

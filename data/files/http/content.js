@@ -294,14 +294,6 @@
         });
     }
 
-    function makePageLink(a, page) {
-        clickable(a, function () {
-            window.scroll(0, 0);
-            onPageChanged.fire(page);
-        });
-        return a;
-    }
-
     function upgradeLink(db, a) {
         function markInvalid(a) {
             a.style.background = "#f00";
@@ -323,7 +315,9 @@
             markInvalid(a);
             return;
         }
-        makePageLink(a, href[0] + "/" + href[1]);
+        clickable(a, function () {
+            onPageChanged.fire(href[0] + "/" + href[1]);
+        });
     }
 
     function addContentLoginForm() {
@@ -395,7 +389,9 @@
         a = document.createElement("a");
         a.href = "/" + pid + "/" + lang;
         li.appendChild(a);
-        makePageLink(a, pid + "/" + lang);
+        clickable(a, function () {
+            onPageChanged.fire(pid + "/" + lang);
+        });
         if (p.hasFile("icon.jpg")) {
             img = document.createElement("img");
             img.src = "/file/" + pid + "/icon.jpg";
@@ -510,7 +506,9 @@
             parent_tit = parent.prop("title_" + lang);
             if (!parent_tit) { return; }
             a.textContent = parent_tit;
-            makePageLink(a, parent.id() + "/" + lang);
+            clickable(a, function () {
+                onPageChanged.fire(parent.id() + "/" + lang);
+            });
             $("title_path").appendChild(span(a));
         }
         if (!tit) { return; }
@@ -552,16 +550,17 @@
         });
     }
 
-    function addContent(db, path) {
-        if (!db) { return; }
-        if (!path) { return; }
-        $("title").style.display = (path.substring(0, 6) === "index/") ?
-                "none" : "block";
+    function setContent(db, path) {
         $("title_text").textContent = "";
         $("title_path").textContent = "";
         $("article").textContent = "";
         $("subs").textContent = "";
-        if (path === "[login]") {
+        if (!db) { return; }
+        if (!path) { return; }
+        if (path.substring(0, 6) !== "index/") {
+            $("title").style.display = "block";
+        }
+        if (path === "login") {
             addContentLoginForm();
         } else {
             path = path.split("/");
@@ -578,12 +577,11 @@
         var db, path = "", last_lang = "";
         onDbChanged.add(function (newDb) {
             db = newDb;
-            addContent(db, path);
+            setContent(db, path);
         });
         onPageChanged.add(function (newPath) {
-            if (path === newPath) { return; }
             path = newPath;
-            addContent(db, path);
+            setContent(db, path);
             newPath = newPath.split("/");
             if (newPath.length === 2) {
                 last_lang = newPath[1];
@@ -593,7 +591,9 @@
         $("article").textContent = "";
         $("subs").textContent = "";
         $("article").appendChild(para("Loading..."));
-        $("footer").appendChild(makePageLink(span("login"), "[login]"));
+        $("footer").appendChild(clickable(span("login"), function () {
+            onPageChanged.fire("login");
+        }));
         function upgradeLangLink(e) {
             var newlang = String(e.href).split("/"), active = true;
             newlang = newlang[newlang.length - 1];
