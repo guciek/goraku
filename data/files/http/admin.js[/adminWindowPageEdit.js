@@ -3,11 +3,11 @@ function adminWindowPageEdit(edit_pid) {
     "use strict";
 
     function makeAutoid(s) {
-        s = String(s).toLowerCase();
+        s = String(s).trim().toLowerCase();
         s = s.replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_");
         s = s.replace(/^_+/, "").replace(/_+$/, "");
         s = getDb().sanitizeId(s);
-        if (!s) { return s; }
+        if (!s) { return ""; }
         if (!getDb().page(s)) { return s; }
         var n = 2;
         while (getDb().page(s + "_" + n)) {
@@ -16,240 +16,314 @@ function adminWindowPageEdit(edit_pid) {
         return s + "_" + n;
     }
 
-    function input_tags(initialTags, skip) {
-        var e = element("div"), checkboxes = {};
-        initialTags = initialTags.split(",");
-        function updValue() {
-            try {
-                var ret = [];
-                Object.keys(checkboxes).forEach(function (id) {
-                    if (checkboxes[id].checked) {
-                        ret.push(id);
+    function cap(text) {
+        var d = element("div", text);
+        d.style.width = "120px";
+        d.style.display = "inline-block";
+        d.style.overflow = "hidden";
+        d.style.marginRight = "20px";
+        return d;
+    }
+
+    function textProperty(title) {
+        return function (defvalue) {
+            var d = element("div"),
+                userEdited = false,
+                inp = adminInputText(function () {
+                    if (d.onsubmit) {
+                        d.onsubmit();
                     }
                 });
-                ret.sort();
-                e.value = ret.join(",");
-                if (e.onchange) { e.onchange(); }
-            } catch (err) {
-                showError(err);
-            }
-        }
-        function addtag(id) {
-            var opt = element("div"), cb, label;
-            opt.style.display = "inline-block";
-            opt.style.marginRight = "10px";
-            opt.style.overflow = "hidden";
-            cb = element("input");
-            cb.type = "checkbox";
-            cb.onchange = cb.onkeyup = updValue;
-            cb.style.marginRight = "5px";
-            cb.style.verticalAlign = "middle";
-            cb.id = "cb_" + Math.random();
-            initialTags.forEach(function (tag) {
-                if (tag === id) {
-                    cb.checked = true;
+            inp.value = d.value = defvalue;
+            d.appendChild(cap(title + ":"));
+            inp.style.width = "260px";
+            inp.style.display = "inline-block";
+            inp.onchange = inp.onkeyup = function () {
+                d.value = inp.value;
+                userEdited = true;
+                if (d.onchange) {
+                    d.onchange();
                 }
+            };
+            d.appendChild(inp);
+            d.setautovalue = function (v) {
+                if (!userEdited) {
+                    inp.value = d.value = v;
+                }
+            };
+            return d;
+        };
+    }
+
+    function selectProperty(title, options) {
+        return function (defvalue) {
+            var d = element("div"),
+                inp = adminInputSelect();
+            options.forEach(function (opt) {
+                inp.addoption(opt[0], opt[1], defvalue === opt[0]);
             });
-            opt.appendChild(cb);
-            label = element("label");
-            label.textContent = id;
-            label.htmlFor = cb.id;
-            opt.appendChild(label);
-            e.appendChild(opt);
-            checkboxes[id] = cb;
-        }
+            d.value = inp.value;
+            d.appendChild(cap(title + ":"));
+            inp.style.width = "260px";
+            inp.style.display = "inline-block";
+            inp.onchange = inp.onkeyup = function () {
+                d.value = inp.value;
+                if (d.onchange) {
+                    d.onchange();
+                }
+            };
+            d.appendChild(inp);
+            return d;
+        };
+    }
+
+    function multiSelectProperty(options) {
+        return function (defvalue) {
+            var e = element("div"),
+                checkboxes = {};
+            function updValue() {
+                try {
+                    var ret = [];
+                    Object.keys(checkboxes).forEach(function (id) {
+                        if (checkboxes[id].checked) {
+                            ret.push(id);
+                        }
+                    });
+                    ret.sort();
+                    e.value = ret.join(",");
+                    if (e.onchange) { e.onchange(); }
+                } catch (err) {
+                    showError(err);
+                }
+            }
+            defvalue = defvalue.split(",");
+            options.forEach(function (val) {
+                var opt = element("div"),
+                    cb = element("input"),
+                    label = element("label");
+                opt.style.display = "inline-block";
+                opt.style.marginRight = "10px";
+                opt.style.overflow = "hidden";
+                cb.type = "checkbox";
+                cb.onchange = cb.onkeyup = updValue;
+                cb.style.marginRight = "5px";
+                cb.style.verticalAlign = "middle";
+                cb.id = "cb_" + Math.random();
+                defvalue.forEach(function (v) {
+                    if (v === val) {
+                        cb.checked = true;
+                    }
+                });
+                opt.appendChild(cb);
+                label.textContent = val;
+                label.htmlFor = cb.id;
+                opt.appendChild(label);
+                e.appendChild(opt);
+                checkboxes[val] = cb;
+            });
+            updValue();
+            e.style.width = "400px";
+            return e;
+        };
+    }
+
+    function titleProperty(defvalue, pid, propid) {
+        var lang = propid.substring(6),
+            tit = "Title (" + lang.toUpperCase() + ")",
+            d = textProperty(tit)(defvalue);
+        d.checkvalue = function () {
+            if (!pid) {
+                return;
+            }
+            var p = getDb().page(pid);
+            if (!p) {
+                return "Page not found";
+            }
+            if (!String(d.value).trim()) {
+                if (p.hasFile(lang + ".html")) {
+                    return tit + " cannot be empty";
+                }
+            }
+        };
+        return d;
+    }
+
+    function tagsProperty(defvalue, pid) {
+        var d, opts = [];
         getDb().forEachPage(function (p) {
-            if (p.id() === skip) { return; }
+            if (p.id() === pid) { return; }
             if (p.prop("type") === "tag") {
-                addtag(p.id());
+                opts.push(p.id());
             }
         });
-        updValue();
-        return e;
+        d = multiSelectProperty(opts)(defvalue);
+        d.isvisible = function (type) {
+            return (type !== "tag");
+        };
+        return d;
     }
+
+    function idProperty(defvalue, pid) {
+        var d = textProperty("Page Address")(defvalue),
+            d_autoval = d.setautovalue;
+        if (pid) { return; }
+        d.checkvalue = function () {
+            var v = String(d.value).trim();
+            if (!v) {
+                return "Page Address is empty";
+            }
+            if (v !== getDb().sanitizeId(v)) {
+                return "Page Address contains disallowed characters";
+            }
+            if (getDb().page(v)) {
+                return "A page with this address already exists";
+            }
+        };
+        d.setautovalue = function (v) {
+            d_autoval(makeAutoid(v));
+        };
+        return d;
+    }
+
+    var properties = [];
+
+    properties.push([
+        "type",
+        selectProperty("Page Type", [
+            ["", "Normal"],
+            ["tag", "Tag"]
+        ])
+    ]);
+    properties.push(["title_en", titleProperty]);
+    properties.push(["title_pl", titleProperty]);
+    properties.push(["id", idProperty]);
+    properties.push(["tags", tagsProperty]);
 
     function propertiesPanel(pid, parentid) {
         var e = element("div"),
             btn,
-            autoid = "",
-            btntit = "Save Changes",
             inputs = {},
-            showHideInputs,
-            input_ids = [
-                "type",
-                "title_en",
-                "title_pl",
-                "tags"
-            ],
-            fieldTitles = {
-                "id": "Page Address",
-                "type": "Page Type",
-                "tags": "Tags"
-            };
-        function onInputChange() {
-            e.propsChanged = true;
-            btn.style.display = "block";
-            if (showHideInputs) { showHideInputs(); }
+            autoid = "";
+        function isVisible(id) {
+            if (!inputs.type) { return false; }
+            if (!inputs[id].isvisible) { return true; }
+            return inputs[id].isvisible(inputs.type.value);
         }
-        function cap(text) {
-            var d = element("div", text);
-            d.style.width = "120px";
-            d.style.display = "inline-block";
-            d.style.overflow = "hidden";
-            d.style.marginRight = "20px";
-            return d;
-        }
-        function propEdit(propid, onsubmit) {
-            var d = element("div"), inp, defvalue = "";
-            (function () {
-                if (!pid) { return; }
-                var p = getDb().page(pid);
-                if (p) {
-                    defvalue = p.prop(propid);
-                }
-            }());
-            function checkChanged() {
-                if (String(inp.value) !== defvalue) {
-                    onInputChange();
-                }
-            }
-            if (propid === "tags") {
-                inp = input_tags(defvalue, pid);
-                inp.style.marginBottom = "10px";
-                inp.style.width = "400px";
-                inp.onchange = checkChanged;
-                checkChanged();
-                e.appendChild(inp);
-                inputs[propid] = inp;
-                return;
-            }
-            if (propid.substring(0, 6) === "title_") {
-                d.appendChild(cap("Title (" +
-                    propid.substring(6).toUpperCase() + "):"));
-            } else {
-                d.appendChild(cap(fieldTitles[propid] + ":"));
-            }
-            if (propid === "type") {
-                inp = adminInputSelect();
-                inp.onchange = inp.onkeyup = checkChanged;
-                inp.addoption("", "Normal", defvalue === "");
-                inp.addoption("tag", "Tag", defvalue === "tag");
-            } else {
-                inp = adminInputText(onsubmit);
-                inp.value = defvalue;
-                inp.onchange = inp.onkeyup = function () {
-                    var s;
-                    checkChanged();
-                    if (propid === "id") {
-                        s = getDb().sanitizeId(inp.value);
-                        if (s !== String(inp.value)) {
-                            inp.value = s;
-                        }
-                        if (s.length >= 1) {
-                            autoid = "id";
-                        }
-                    } else if ((propid.substring(0, 6) === "title_") &&
-                            ((autoid === "") || (autoid === propid))) {
-                        autoid = propid;
-                        if (inputs.id) {
-                            inputs.id.value = makeAutoid(inp.value);
-                            if (!inputs.id.value) { autoid = ""; }
-                        }
-                    }
-                };
-            }
-            checkChanged();
-            inp.style.width = "260px";
-            inp.style.display = "inline-block";
-            d.appendChild(inp);
-            d.style.marginBottom = "10px";
-            e.appendChild(d);
-            inputs[propid] = inp;
-        }
-        if (parentid) {
-            btntit = "Create";
-            input_ids.push("id");
-        }
-        btn = adminSaveButton(btntit, function (showerror) {
-            var p, data = {}, anytitle = false;
+        function showHideProperties() {
             Object.keys(inputs).forEach(function (id) {
-                data[id] = String(inputs[id].value).trim();
-                if ((id.substring(0, 6) === "title_") && data[id]) {
-                    anytitle = true;
-                }
+                inputs[id].style.display = isVisible(id) ? "block" : "none";
             });
-            if (data.type === "tag") {
-                data.tags = "";
-            }
-            if (!anytitle) {
-                showerror("Titles cannot all be empty");
-                return;
-            }
-            function onerr(err) {
-                if (err) {
-                    showerror(err);
-                } else {
-                    showerror();
-                    btn.style.display = "none";
-                    e.propsChanged = undefined;
-                    if (e.close_window) {
-                        e.close_window();
+        }
+        btn = adminSaveButton(
+            parentid ? "Create" : "Save Changes",
+            function (showerror) {
+                var p,
+                    data = {},
+                    anytitle = false,
+                    last_error;
+                Object.keys(inputs).forEach(function (id) {
+                    if (isVisible(id)) {
+                        if (inputs[id].checkvalue) {
+                            var check = inputs[id].checkvalue();
+                            if (check) {
+                                last_error = check;
+                            }
+                        }
+                        data[id] = String(inputs[id].value).trim();
+                        if ((id.substring(0, 6) === "title_") && data[id]) {
+                            anytitle = true;
+                        }
+                    } else {
+                        data[id] = "";
+                    }
+                });
+                if (!anytitle) {
+                    last_error = "Titles cannot all be empty";
+                }
+                if (last_error) {
+                    showerror(last_error);
+                    return;
+                }
+                function on_write_err(err) {
+                    if (err) {
+                        showerror(err);
+                    } else {
+                        showerror();
+                        btn.style.display = "none";
+                        e.propsChanged = undefined;
+                        if (e.close_window) {
+                            e.close_window();
+                        }
                     }
                 }
-            }
-            if (!pid) {
-                p = data.id;
-                delete data.id;
-                data.parent = parentid;
-                getDb().create(p, data, onerr);
-                return;
-            }
-            p = getDb().page(pid);
-            if (!p) {
-                showerror("Page not found");
-                return;
-            }
-            p.forEachFile(function (fn) {
-                fn = fn.split(".");
-                if (fn.length !== 2) { return; }
-                if (fn[1] !== "html") { return; }
-                if (!data["title_" + fn[0]]) {
-                    showerror("Title (" + fn[0].toUpperCase() +
-                        ") cannot be empty");
-                    p = undefined;
+                if (!pid) {
+                    p = data.id;
+                    delete data.id;
+                    data.parent = parentid;
+                    getDb().create(p, data, on_write_err);
+                    return;
                 }
-            });
-            if (p) {
-                p.writeProps(data, onerr);
+                p = getDb().page(pid);
+                if (p) {
+                    p.writeProps(data, on_write_err);
+                } else {
+                    showerror("Page not found");
+                }
             }
-        });
+        );
         btn.style.display = "none";
-        input_ids.forEach(function (id) {
-            propEdit(id,  btn.getElementsByTagName("input")[0].onclick);
+        properties.forEach(function (id_constr) {
+            var inp,
+                p,
+                defvalue = "";
+            function onchange() {
+                showHideProperties();
+                if (String(inp.value) !== defvalue) {
+                    e.propsChanged = true;
+                    btn.style.display = "block";
+                }
+                if (inputs.id && (id_constr[0].substring(0, 6) === "title_") &&
+                        ((autoid === "") || (autoid === id_constr[0]))) {
+                    autoid = id_constr[0];
+                    inputs.id.setautovalue(inp.value);
+                    if (!inp.value) { autoid = ""; }
+                }
+            }
+            if (pid) {
+                p = getDb().page(pid);
+                if (p) {
+                    defvalue = p.prop(id_constr[0]);
+                }
+            }
+            inp = id_constr[1](defvalue, pid, id_constr[0]);
+            if (!inp) { return; }
+            onchange();
+            inp.onchange = onchange;
+            inp.onsubmit = btn.getElementsByTagName("input")[0].onclick;
+            inp.style.marginBottom = "10px";
+            e.appendChild(inp);
+            inputs[id_constr[0]] = inp;
         });
-        showHideInputs = function () {
-            inputs.tags.style.display =
-                (inputs.type.value === "tag") ? "none" : "block";
-        };
-        showHideInputs();
+        showHideProperties();
         e.appendChild(btn);
         return e;
     }
 
     function showEdit(pid) {
-        var e = element("div"), bottom = element("div"), links = element("div"), panel;
+        var e = element("div"),
+            bottom = element("div"),
+            links = element("div"),
+            panel;
         makeWindow(e, "Edit Page: " + pid);
         e.appendChild(links);
         e.appendChild(bottom);
-        panel = propertiesPanel(pid);
-        bottom.appendChild(panel);
         function dbChanged() {
             var p = getDb().page(pid);
             if (!p) {
                 e.close_window();
                 return;
             }
-            if (!panel.propsChanged) {
+            if ((!panel) || (!panel.propsChanged)) {
                 bottom.textContent = "";
                 panel = propertiesPanel(pid);
                 bottom.appendChild(panel);
