@@ -51,8 +51,7 @@ def generateForDirectory(directory):
 	fdata = dict()
 	for fdiskpath in paths:
 		add_path = fdiskpath[len(directory)+1:]
-		add_path = re.sub("\[[^\.\]]+\]", "", add_path)
-		add_path = re.sub("\[[^\.\]]+\.", ".", add_path)
+		add_path = re.sub("\[[^\]]+(\]|$)", "", add_path)
 		with open(fdiskpath, "rb") as f:
 			data = f.read()
 			if add_path in fdata:
