@@ -196,8 +196,18 @@ function adminWindowPageEdit(edit_pid) {
     ]);
     properties.push(["title_en", titleProperty]);
     properties.push(["title_pl", titleProperty]);
-    properties.push(["id", idProperty]);
+    properties.push([
+        "sort",
+        selectProperty("Sort Order", [
+            ["10", "First"],
+            ["30", "Before Default"],
+            ["", "Default"],
+            ["70", "After Default"],
+            ["90", "Last"]
+        ])
+    ]);
     properties.push(["tags", tagsProperty]);
+    properties.push(["id", idProperty]);
 
     function propertiesPanel(pid, parentid) {
         var e = element("div"),

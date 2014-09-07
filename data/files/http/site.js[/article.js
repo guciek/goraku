@@ -134,7 +134,7 @@
             });
         }
         children = sortByFunc(children, function (c) {
-            return c.prop("title_" + lang);
+            return (c.prop("sort") || "50") + c.prop("title_" + lang);
         });
         children.forEach(function (c) {
             var sub = subPageLi(c.id(), lang);

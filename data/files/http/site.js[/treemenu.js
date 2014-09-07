@@ -23,7 +23,7 @@
         function buildMenu() {
             var selected, visited = {}, linkById = {}, subsById = {};
             function orderFunc(c) {
-                return c.prop("title_" + lang);
+                return (c.prop("sort") || "50") + c.prop("title_" + lang);
             }
             pidChanged = function () {
                 var p, i;
