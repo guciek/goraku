@@ -113,6 +113,19 @@
                     });
                     sortByFunc(wrapall, orderfunc).forEach(f);
                 },
+                forEachProp: function (onprop) {
+                    if (!data[pid]) { return; }
+                    var k, v;
+                    for (k in data[pid].props) {
+                        if (data[pid].props.hasOwnProperty(k)) {
+                            v = data[pid].props[k];
+                            if ((k !== "parent") && (k.length > 0) &&
+                                    (v.length > 0)) {
+                                onprop(k, v);
+                            }
+                        }
+                    }
+                },
                 parent: function () {
                     var parentid = data[pid].props.parent;
                     if (!parentid) { return undefined; }
