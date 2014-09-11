@@ -11,7 +11,7 @@ import (
     "time"
 )
 
-func StderrLogger() (Logger, error) {
+func StderrLogger() Logger {
     addline := func(line string) {
         line = fmt.Sprintf("[%s, PID=%d] %s\n",
             time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
@@ -25,6 +25,5 @@ func StderrLogger() (Logger, error) {
         Error: func(line string, params ...interface{}) {
             addline(fmt.Sprintf("Error: "+line, params...))
         },
-        Finalize: func() error { return nil },
-    }, nil
+    }
 }

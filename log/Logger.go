@@ -8,5 +8,4 @@ package log
 type Logger struct {
     Message func(string, ...interface{})
     Error func(string, ...interface{})
-    Finalize func() error
 }

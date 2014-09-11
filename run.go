@@ -18,15 +18,10 @@ import (
 
 func run(listenPort int) {
     var logger log.Logger
-    {
-        var err error
-        if listenPort > 0 {
-            logger, err = log.StderrLogger()
-        } else {
-            logger, err = log.FileLogger("log.txt")
-        }
-        if err != nil { panic(fmt.Sprintf("could not start log: %v", err)) }
-        defer logger.Finalize()
+    if listenPort > 0 {
+        logger = log.StderrLogger()
+    } else {
+        logger = log.FileLogger("log.txt")
     }
 
     var serv server.Server
@@ -55,9 +50,7 @@ func run(listenPort int) {
         <-s
         if err := serv.Finalize(); err != nil {
             logger.Error(err.Error())
-        }
-        if err := logger.Finalize(); err != nil {
-            os.Exit(43)
+            os.Exit(1)
         }
         os.Exit(0)
     }()

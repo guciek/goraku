@@ -11,13 +11,14 @@ import (
     "time"
 )
 
-func FileLogger(fname string) (Logger, error) {
-    f, err := os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-    if err != nil { return Logger {}, err }
+func FileLogger(fname string) Logger {
     addline := func(line string) {
         line = fmt.Sprintf("[%s, PID=%d] %s\n",
             time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
             os.Getpid(), line)
+        f, err := os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+        if err != nil { return }
+        defer f.Close()
         f.WriteString(line)
     }
     return Logger {
@@ -27,8 +28,5 @@ func FileLogger(fname string) (Logger, error) {
         Error: func(line string, params ...interface{}) {
             addline(fmt.Sprintf("Error: "+line, params...))
         },
-        Finalize: func() error {
-            return f.Close()
-        },
-    }, nil
+    }
 }
