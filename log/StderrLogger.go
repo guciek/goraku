@@ -6,25 +6,25 @@
 package log
 
 import (
-	"fmt"
-	"os"
-	"time"
+    "fmt"
+    "os"
+    "time"
 )
 
 func StderrLogger() (Logger, error) {
-	addline := func(line string) {
-		line = fmt.Sprintf("[%s, PID=%d] %s\n",
-			time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
-			os.Getpid(), line)
-		os.Stderr.WriteString(line)
-	}
-	return Logger {
-		Message: func(line string, params ...interface{}) {
-			addline(fmt.Sprintf(line, params...))
-		},
-		Error: func(line string, params ...interface{}) {
-			addline(fmt.Sprintf("Error: "+line, params...))
-		},
-		Finalize: func() error { return nil },
-	}, nil
+    addline := func(line string) {
+        line = fmt.Sprintf("[%s, PID=%d] %s\n",
+            time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
+            os.Getpid(), line)
+        os.Stderr.WriteString(line)
+    }
+    return Logger {
+        Message: func(line string, params ...interface{}) {
+            addline(fmt.Sprintf(line, params...))
+        },
+        Error: func(line string, params ...interface{}) {
+            addline(fmt.Sprintf("Error: "+line, params...))
+        },
+        Finalize: func() error { return nil },
+    }, nil
 }

@@ -6,15 +6,15 @@
 package server
 
 import (
-	"github.com/guciek/goraku/data"
+    "github.com/guciek/goraku/data"
 )
 
 func notFound() Response {
-	d := data.Error404Html()
-	if len(d) < 1 { panic("error page not found") }
-	return Response {
-		Code: 404,
-		Headers: map[string]string { "Content-Type": "text/html" },
-		Body: d,
-	}
+    d := data.Error404Html()
+    if len(d) < 1 { panic("error page not found") }
+    return Response {
+        Code: 404,
+        Headers: map[string]string { "Content-Type": "text/html" },
+        Body: d,
+    }
 }

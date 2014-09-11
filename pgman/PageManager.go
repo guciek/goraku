@@ -6,11 +6,11 @@
 package pgman
 
 type PageManager struct {
-	HasWriteLock func() bool
-	DropWriteLock func()
-	ById func(string) Page
-	Create func(string) (Page, error)
-	ForEach func(func(Page))
-	SyncChanges func() error
-	Finalize func() error
+    HasWriteLock func() bool
+    DropWriteLock func()
+    ById func(string) Page
+    Create func(string) (Page, error)
+    ForEach func(func(Page))
+    SyncChanges func() error
+    Finalize func() error
 }

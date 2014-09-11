@@ -6,12 +6,12 @@
 package util
 
 func ValidId(s string) bool {
-	if len(s) < 1 { return false }
-	for _, b := range []byte(s) {
-		if (b >= 97) && (b <= 122) { continue }
-		if (b >= 48) && (b <= 57) { continue }
-		if b == 95 { continue }
-		return false
-	}
-	return true
+    if len(s) < 1 { return false }
+    for _, b := range []byte(s) {
+        if (b >= 97) && (b <= 122) { continue }
+        if (b >= 48) && (b <= 57) { continue }
+        if b == 95 { continue }
+        return false
+    }
+    return true
 }

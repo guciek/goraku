@@ -6,24 +6,24 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"os"
+    "flag"
+    "fmt"
+    "os"
 )
 
 func main() {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
-	}()
+    defer func() {
+        if err := recover(); err != nil {
+            fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+            os.Exit(1)
+        }
+    }()
 
-	var listenPort = flag.Int("listen", 0, "start a http server on this port")
-	flag.Parse()
-	if flag.NArg() > 0 {
-		panic(fmt.Sprintf("unknown argument: %v", flag.Arg(0)))
-	}
+    var listenPort = flag.Int("listen", 0, "start a http server on this port")
+    flag.Parse()
+    if flag.NArg() > 0 {
+        panic(fmt.Sprintf("unknown argument: %v", flag.Arg(0)))
+    }
 
-	run(*listenPort)
+    run(*listenPort)
 }

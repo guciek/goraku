@@ -6,8 +6,8 @@
 package session
 
 type Permissions struct {
-	IsAdmin func() bool
-	Login func(user, pass string) bool
-	Logout func()
-	NewHeaders func(func(k, v string))
+    IsAdmin func() bool
+    Login func(user, pass string) bool
+    Logout func()
+    NewHeaders func(func(k, v string))
 }

@@ -6,18 +6,18 @@
 package server
 
 type Request struct {
-	Path string
-	Headers map[string]string
-	Body []byte
+    Path string
+    Headers map[string]string
+    Body []byte
 }
 
 type Response struct {
-	Code int
-	Headers map[string]string
-	Body []byte
+    Code int
+    Headers map[string]string
+    Body []byte
 }
 
 type Server struct {
-	Respond func(Request) Response
-	Finalize func() error
+    Respond func(Request) Response
+    Finalize func() error
 }

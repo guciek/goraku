@@ -6,6 +6,6 @@
 package session
 
 type SessionManager struct {
-	OnRequest func(cookies string) Permissions
-	Finalize func() error
+    OnRequest func(cookies string) Permissions
+    Finalize func() error
 }

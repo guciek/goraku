@@ -6,17 +6,17 @@
 package util
 
 import (
-	"bytes"
+    "bytes"
 )
 
 func StripHtml(s string) string {
-	var buf bytes.Buffer
-	for _, b := range []byte(s) {
-		if b < 32 { continue }
-		if b == 38 { continue }
-		if b == 60 { continue }
-		if b == 62 { continue }
-		buf.WriteByte(b)
-	}
-	return buf.String()
+    var buf bytes.Buffer
+    for _, b := range []byte(s) {
+        if b < 32 { continue }
+        if b == 38 { continue }
+        if b == 60 { continue }
+        if b == 62 { continue }
+        buf.WriteByte(b)
+    }
+    return buf.String()
 }

@@ -6,29 +6,29 @@
 package log
 
 import (
-	"fmt"
-	"os"
-	"time"
+    "fmt"
+    "os"
+    "time"
 )
 
 func FileLogger(fname string) (Logger, error) {
-	f, err := os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-	if err != nil { return Logger {}, err }
-	addline := func(line string) {
-		line = fmt.Sprintf("[%s, PID=%d] %s\n",
-			time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
-			os.Getpid(), line)
-		f.WriteString(line)
-	}
-	return Logger {
-		Message: func(line string, params ...interface{}) {
-			addline(fmt.Sprintf(line, params...))
-		},
-		Error: func(line string, params ...interface{}) {
-			addline(fmt.Sprintf("Error: "+line, params...))
-		},
-		Finalize: func() error {
-			return f.Close()
-		},
-	}, nil
+    f, err := os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+    if err != nil { return Logger {}, err }
+    addline := func(line string) {
+        line = fmt.Sprintf("[%s, PID=%d] %s\n",
+            time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
+            os.Getpid(), line)
+        f.WriteString(line)
+    }
+    return Logger {
+        Message: func(line string, params ...interface{}) {
+            addline(fmt.Sprintf(line, params...))
+        },
+        Error: func(line string, params ...interface{}) {
+            addline(fmt.Sprintf("Error: "+line, params...))
+        },
+        Finalize: func() error {
+            return f.Close()
+        },
+    }, nil
 }

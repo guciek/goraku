@@ -6,13 +6,13 @@
 package server
 
 func movedPermanently(url string) Response {
-	return Response {
-		Code: 301,
-		Headers: map[string]string {
-			"Location": url,
-			"Content-Type": "text/html",
-			"Cache-Control": "max-age=86400",
-		},
-		Body: []byte("<a href=\""+url+"\">page moved</a>\n"),
-	}
+    return Response {
+        Code: 301,
+        Headers: map[string]string {
+            "Location": url,
+            "Content-Type": "text/html",
+            "Cache-Control": "max-age=86400",
+        },
+        Body: []byte("<a href=\""+url+"\">page moved</a>\n"),
+    }
 }

@@ -245,4 +245,3 @@ function cleanHtml(inputHtml, imgBase) {
         return result;
     }());
 }
-

@@ -6,11 +6,11 @@
 package server
 
 func binResponse(response []byte) Response {
-	return Response {
-		Code: 200,
-		Headers: map[string]string {
-			"Content-Type": "application/octet-stream",
-		},
-		Body: response,
-	}
+    return Response {
+        Code: 200,
+        Headers: map[string]string {
+            "Content-Type": "application/octet-stream",
+        },
+        Body: response,
+    }
 }
