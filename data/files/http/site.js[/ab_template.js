@@ -50,6 +50,7 @@
         }
     }
 
+
     function initBrowserEvents() {
         function changePageFromBrowser() {
             onPageChanged.fire(
@@ -63,12 +64,12 @@
             try {
                 window.scroll(0, 0);
             } catch (ignore) {}
-            if (!browserInitiated) {
-                newPath = "/" + newPath;
-                if (String(window.location.pathname) !== newPath) {
-                    window.history.pushState({}, newPath, newPath);
-                }
-            }
+            if (browserInitiated) { return; }
+            newPath = "/" + newPath;
+            if (String(window.location.pathname) === newPath) { return; }
+            try {
+                window.history.pushState({}, newPath, newPath);
+            } catch (ignore) {}
         });
     }
 

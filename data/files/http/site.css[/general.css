@@ -60,7 +60,7 @@ h2 {
     font-size: 14px;;
 }
 
-input {
+input[type="text"], input[type="password"], input[type="select"] {
     border: 1px solid #444;
     background: #fff;
     padding: 2px 5px;
@@ -69,8 +69,11 @@ input {
 }
 
 input[type="submit"] {
+    border: 1px solid #444;
     background: #ddd;
     padding: 2px 15px;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
 }
 
 input[type="submit"]:hover {

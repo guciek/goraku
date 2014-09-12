@@ -8,8 +8,8 @@
         e.style.maxHeight = h + "px";
         function step() {
             h = (h + 2) * 1.5;
-            if (h > 2000) {
-                e.style.maxHeight = undefined;
+            if (h > 1000) {
+                e.style.maxHeight = "none";
             } else {
                 setTimeout(step, 10);
                 e.style.maxHeight = Math.round(h) + "px";
