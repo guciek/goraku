@@ -71,13 +71,7 @@
                 popup = element("div");
             zoomedImage.textContent = "";
             zoomedImage.appendChild(popup);
-            newimg.onload = function () {
-                try {
-                    displayPopup(popup, newimg);
-                } catch (err) {
-                    showError(err);
-                }
-            };
+            newimg.onload = runLater(displayPopup, popup, newimg);
             clickable(newimg, function () {
                 zoomedImage.textContent = "";
             });
@@ -101,14 +95,12 @@
         }
     }
 
-    try {
+    runNow(function () {
         onArticleLoaded.add(processArticleImages);
         onPageChanged.add(function () {
             if (zoomedImage) {
                 zoomedImage.textContent = "";
             }
         });
-    } catch (err) {
-        showError(err);
-    }
+    });
 }());

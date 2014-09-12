@@ -124,9 +124,5 @@
         });
     }
 
-    try {
-        initTreeMenu();
-    } catch (err) {
-        showError(err);
-    }
+    runNow(initTreeMenu);
 }());

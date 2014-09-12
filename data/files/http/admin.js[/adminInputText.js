@@ -11,11 +11,7 @@ function adminInputText(action) {
             ev = ev || window.event;
             var c = ev.which || ev.keyCode;
             if (c !== 13) { return true; }
-            try {
-                action();
-            } catch (err) {
-                showError(err);
-            }
+            runNow(action);
             if (ev) { ev.preventDefault(); }
             return false;
         };

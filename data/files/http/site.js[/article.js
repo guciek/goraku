@@ -154,10 +154,8 @@
         addContentPage(path[0], path[1]);
     }
 
-    try {
+    runNow(function () {
         onDbChanged.add(onUpdate);
         onPageChanged.add(onUpdate);
-    } catch (err) {
-        showError(err);
-    }
+    });
 }());

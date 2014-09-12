@@ -1,8 +1,9 @@
 
 var $,
+    runNow,
+    runLater,
     element,
     clickable,
-    showError,
     makeSet,
     makeEvent,
     onDbChanged,
@@ -14,6 +15,18 @@ var $,
 
 (function () {
     "use strict";
+
+    function showError(msg) {
+        try {
+            var e = document.createElement("div"),
+                lc = document.getElementById("leftcolumn");
+            e.innerHTML = "Error: " + msg;
+            e.className = "jswarning";
+            lc.insertBefore(e, lc.firstChild);
+        } catch (err) {
+            alert("Error: " + msg);
+        }
+    }
 
     Array.prototype.forEach = function (f) {
         var i, len = this.length;
@@ -27,6 +40,24 @@ var $,
 
     $ = function (id) {
         return document.getElementById(id);
+    };
+
+    runNow = function (action, p1, p2, p3) {
+        try {
+            action(p1, p2, p3);
+        } catch (err) {
+            showError(err);
+        }
+    };
+
+    runLater = function (action, p1, p2, p3) {
+        return function () {
+            try {
+                action(p1, p2, p3);
+            } catch (err) {
+                showError(err);
+            }
+        };
     };
 
     element = function (tag, content) {
@@ -43,28 +74,12 @@ var $,
 
     clickable = function (e, action) {
         e.onclick = function (ev) {
-            try {
-                action();
-            } catch (err) {
-                showError(err);
-            }
+            runNow(action);
             if (ev) { ev.preventDefault(); }
             return false;
         };
         e.style.cursor = "pointer";
         return e;
-    };
-
-    showError = function (msg) {
-        try {
-            var e = document.createElement("div"),
-                lc = document.getElementById("leftcolumn");
-            e.textContent = "Error: " + msg;
-            e.className = "jswarning";
-            lc.insertBefore(e, lc.firstChild);
-        } catch (err) {
-            alert("Error: " + msg);
-        }
     };
 
     makeSet = function () {
@@ -120,11 +135,7 @@ var $,
             removeAll: callbacks.removeAll,
             fire: function (p1, p2, p3) {
                 callbacks.forEach(function (callback) {
-                    try {
-                        callback(p1, p2, p3);
-                    } catch (err) {
-                        showError(err);
-                    }
+                    runNow(callback, p1, p2, p3);
                 });
             }
         };

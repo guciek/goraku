@@ -11,29 +11,21 @@ function makeWindow(content, title, notCloseable) {
         drag;
 
     function onfocus() {
-        try {
-            close.style.background = "#666";
-            bar.style.background = "#666";
-            inner.style.border = "2px solid #666";
-            inner.style.borderTop = "none";
-            windowParent.nextZindex += 1;
-            w.style.zIndex = windowParent.nextZindex;
-            if (content.onfocus) { content.onfocus(); }
-        } catch (err) {
-            showError(err);
-        }
+        close.style.background = "#666";
+        bar.style.background = "#666";
+        inner.style.border = "2px solid #666";
+        inner.style.borderTop = "none";
+        windowParent.nextZindex += 1;
+        w.style.zIndex = windowParent.nextZindex;
+        if (content.onfocus) { content.onfocus(); }
     }
 
     function onblur() {
-        try {
-            close.style.background = "#aaa";
-            bar.style.background = "#aaa";
-            inner.style.border = "2px solid #aaa";
-            inner.style.borderTop = "none";
-            if (content.onblur) { content.onblur(); }
-        } catch (err) {
-            showError(err);
-        }
+        close.style.background = "#aaa";
+        bar.style.background = "#aaa";
+        inner.style.border = "2px solid #aaa";
+        inner.style.borderTop = "none";
+        if (content.onblur) { content.onblur(); }
     }
 
     function onactivate() {
@@ -67,17 +59,13 @@ function makeWindow(content, title, notCloseable) {
     function closewindow() {
         if (removed) { return; }
         removed = true;
-        try {
-            if (windowParent.focusedWindow === w) {
-                w.onblur();
-                windowParent.focusedWindow = null;
-            }
-            w.parentNode.removeChild(w);
-            drag.clean();
-            if (content.onclose) { content.onclose(); }
-        } catch (err) {
-            showError(err);
+        if (windowParent.focusedWindow === w) {
+            w.onblur();
+            windowParent.focusedWindow = null;
         }
+        w.parentNode.removeChild(w);
+        drag.clean();
+        if (content.onclose) { content.onclose(); }
     }
 
     if (!windowParent) {
@@ -109,7 +97,7 @@ function makeWindow(content, title, notCloseable) {
         close.style.fontWeight = "bold";
         close.style.cursor = "pointer";
         close.style.background = "#666";
-        close.onclick = closewindow;
+        close.onclick = runLater(closewindow);
         close.onmousedown = function (event) {
             event.stopPropagation();
         };
@@ -137,8 +125,8 @@ function makeWindow(content, title, notCloseable) {
 
     w.style.position = "fixed";
     w.style.border = "1px solid #ccc";
-    w.onfocus = onfocus;
-    w.onblur = onblur;
+    w.onfocus = runLater(onfocus);
+    w.onblur = runLater(onblur);
 
     w.appendChild(bar);
     w.appendChild(inner);
@@ -163,8 +151,8 @@ function makeWindow(content, title, notCloseable) {
     w.onfocus();
     bounds();
 
-    w.addEventListener('mousedown', onactivate, false);
-    w.addEventListener('touchstart', onactivate, false);
+    w.addEventListener('mousedown', runLater(onactivate), false);
+    w.addEventListener('touchstart', runLater(onactivate), false);
 
     drag = makeDraggable(bar);
 

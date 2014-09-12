@@ -82,19 +82,15 @@ function adminWindowPageEdit(edit_pid) {
             var e = element("div"),
                 checkboxes = {};
             function updValue() {
-                try {
-                    var ret = [];
-                    Object.keys(checkboxes).forEach(function (id) {
-                        if (checkboxes[id].checked) {
-                            ret.push(id);
-                        }
-                    });
-                    ret.sort();
-                    e.value = ret.join(",");
-                    if (e.onchange) { e.onchange(); }
-                } catch (err) {
-                    showError(err);
-                }
+                var ret = [];
+                Object.keys(checkboxes).forEach(function (id) {
+                    if (checkboxes[id].checked) {
+                        ret.push(id);
+                    }
+                });
+                ret.sort();
+                e.value = ret.join(",");
+                if (e.onchange) { e.onchange(); }
             }
             defvalue = defvalue.split(",");
             options.forEach(function (val) {
@@ -105,7 +101,7 @@ function adminWindowPageEdit(edit_pid) {
                 opt.style.marginRight = "10px";
                 opt.style.overflow = "hidden";
                 cb.type = "checkbox";
-                cb.onchange = cb.onkeyup = updValue;
+                cb.onchange = cb.onkeyup = runLater(updValue);
                 cb.style.marginRight = "5px";
                 cb.style.verticalAlign = "middle";
                 cb.id = "cb_" + Math.random();

@@ -52,31 +52,18 @@ function adminWindowPageIcon(pid) {
     draw = canvas.getContext('2d');
     draw.fillText("no icon", 10, 10);
 
-    inp.onchange = function () {
-        function onld(ev) {
-            try {
+    inp.onchange = runLater(function () {
+        if (inp.files.length < 1) { return; }
+        var fr = new FileReader();
+        fr.onload = function (ev) {
+            runNow(function () {
                 var img = element("img");
-                img.onload = function () {
-                    try {
-                        setImg(img);
-                    } catch (err) {
-                        showError(err);
-                    }
-                };
+                img.onload = runLater(setImg, img);
                 img.src = ev.target.result;
-            } catch (err) {
-                showError(err);
-            }
-        }
-        try {
-            if (inp.files.length < 1) { return; }
-            var fr = new FileReader();
-            fr.onload = onld;
-            fr.readAsDataURL(inp.files[0]);
-        } catch (err) {
-            showError(err);
-        }
-    };
+            });
+        };
+        fr.readAsDataURL(inp.files[0]);
+    });
 
     e.appendChild(adminSaveButton("Change", function (showerror) {
         var p = getDb().page(pid), data;

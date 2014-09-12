@@ -94,7 +94,11 @@
         }, 20);
     }
 
-    try {
+    runNow(function () {
+        $("hide_js_warning").textContent = "";
+        if ($("hide_js_warning").childNodes.length !== 0) {
+            return;
+        }
         clearContent();
         $("article").appendChild(element("p", "Loading database..."));
         onPageChanged.add(onUpdate);
@@ -121,7 +125,5 @@
                 }
             }
         }());
-    } catch (err) {
-        showError(err);
-    }
+    });
 }());

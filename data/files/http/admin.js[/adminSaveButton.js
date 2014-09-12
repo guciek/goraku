@@ -10,25 +10,18 @@ function adminSaveButton(title, action) {
         var active = true, e = element("input");
         e.type = "submit";
         e.value = String(tit);
-        e.style.cursor = "pointer";
-        e.onclick = function (ev) {
-            try {
-                if (active) {
-                    active = false;
-                    e.style.cursor = "default";
-                    try { e.style.opacity = 0.5; } catch (ignore) {}
-                    action(function () {
-                        active = true;
-                        e.style.cursor = "pointer";
-                        try { e.style.opacity = 1; } catch (ignore) {}
-                    });
-                }
-            } catch (err) {
-                showError(err);
+        clickable(e, function () {
+            if (active) {
+                active = false;
+                e.style.cursor = "default";
+                try { e.style.opacity = 0.5; } catch (ignore) {}
+                action(function () {
+                    active = true;
+                    e.style.cursor = "pointer";
+                    try { e.style.opacity = 1; } catch (ignore) {}
+                });
             }
-            if (ev) { ev.preventDefault(); }
-            return false;
-        };
+        });
         return e;
     }
 

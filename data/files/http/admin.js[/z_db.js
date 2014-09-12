@@ -12,21 +12,18 @@
         var req = new XMLHttpRequest();
         req.open("POST", url, true);
         req.setRequestHeader("Content-Type", "application/octet-stream");
-        req.onreadystatechange = function () {
-            var status = Number(req.status);
-            if (Number(req.readyState) < 4) { return; }
-            try {
-                if (status === 200) {
-                    onresponse(String(req.responseText));
-                } else if (status > 0) {
-                    onresponse("", "HTTP code " + status);
-                } else {
-                    onresponse("", "HTTP error");
-                }
-            } catch (err) {
-                showError(err);
+        req.onreadystatechange = runLater(function () {
+            if (req.readyState < 4) {
+                return;
             }
-        };
+            if (req.status === 200) {
+                onresponse(String(req.responseText));
+            } else if (req.status) {
+                onresponse("", "HTTP code " + req.status);
+            } else {
+                onresponse("", "HTTP error");
+            }
+        });
         req.send(data);
     }
 
@@ -57,9 +54,5 @@
         );
     }
 
-    try {
-        init();
-    } catch (err) {
-        showError(err);
-    }
+    runNow(init);
 }());
