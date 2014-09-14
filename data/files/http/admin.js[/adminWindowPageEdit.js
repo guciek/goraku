@@ -218,6 +218,7 @@ function adminWindowPageEdit(edit_pid) {
         function showHideProperties() {
             Object.keys(inputs).forEach(function (id) {
                 inputs[id].style.display = isVisible(id) ? "block" : "none";
+                inputs[id].onshowhide();
             });
         }
         btn = adminSaveButton(
@@ -282,19 +283,6 @@ function adminWindowPageEdit(edit_pid) {
             var inp,
                 p,
                 defvalue = "";
-            function onchange() {
-                showHideProperties();
-                if (String(inp.value) !== defvalue) {
-                    e.propsChanged = true;
-                    btn.style.display = "block";
-                }
-                if (inputs.id && (id_constr[0].substring(0, 6) === "title_") &&
-                        ((autoid === "") || (autoid === id_constr[0]))) {
-                    autoid = id_constr[0];
-                    inputs.id.setautovalue(inp.value);
-                    if (!inp.value) { autoid = ""; }
-                }
-            }
             if (pid) {
                 p = getDb().page(pid);
                 if (p) {
@@ -303,8 +291,23 @@ function adminWindowPageEdit(edit_pid) {
             }
             inp = id_constr[1](defvalue, pid, id_constr[0]);
             if (!inp) { return; }
-            onchange();
-            inp.onchange = onchange;
+            inp.onchange = runLater(showHideProperties);
+            inp.onshowhide = function () {
+                var curv = String(inp.value).trim();
+                if (!isVisible(id_constr[0])) {
+                    curv = "";
+                }
+                if (curv !== defvalue) {
+                    e.propsChanged = true;
+                    btn.style.display = "block";
+                }
+                if (inputs.id && (id_constr[0].substring(0, 6) === "title_") &&
+                        ((autoid === "") || (autoid === id_constr[0]))) {
+                    autoid = id_constr[0];
+                    inputs.id.setautovalue(curv);
+                    if (!curv) { autoid = ""; }
+                }
+            };
             inp.onsubmit = btn.getElementsByTagName("input")[0].onclick;
             inp.style.marginBottom = "10px";
             e.appendChild(inp);
