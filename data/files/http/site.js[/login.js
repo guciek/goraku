@@ -133,6 +133,12 @@
         $("article").appendChild(element("p", submit));
     }
 
+    function onUpdate() {
+        if (getPage() === "login") {
+            addContentLogin();
+        }
+    }
+
     runNow(function () {
         $("footer").appendChild(clickable(
             element("span", "login"),
@@ -140,10 +146,7 @@
                 onPageChanged.fire("login");
             }
         ));
-        onPageChanged.add(function (page) {
-            if (page === "login") {
-                addContentLogin();
-            }
-        });
+        onDbChanged.add(onUpdate);
+        onPageChanged.add(onUpdate);
     });
 }());

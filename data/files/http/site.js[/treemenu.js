@@ -21,19 +21,19 @@
     function initTreeMenu() {
         var db, lang, pid, pidChanged;
         function buildMenu() {
-            var selected, visited = {}, linkById = {}, subsById = {};
+            var selected, visited = {}, setSelById = {}, subsById = {};
             function orderFunc(c) {
                 return (c.prop("sort") || "50") + c.prop("title_" + lang);
             }
             pidChanged = function () {
                 var p, i;
                 if (selected) {
-                    selected.style.fontWeight = "normal";
+                    selected(false);
                     selected = undefined;
                 }
-                if (linkById[pid]) {
-                    linkById[pid].style.fontWeight = "bold";
-                    selected = linkById[pid];
+                if (setSelById[pid]) {
+                    selected = setSelById[pid];
+                    selected(true);
                     p = db.page(pid);
                     for (i = 0; i < 100; i += 1) {
                         if (!subsById[p.id()]) { break; }
@@ -47,12 +47,40 @@
                 }
             };
             function visit(p) {
-                var outer, e, subs;
+                var line = element("div"),
+                    outer = element("div", line),
+                    subs = element("div"),
+                    tit = p.prop("title_" + lang);
+                function setSelected(issel) {
+                    var a;
+                    line.textContent = "";
+                    if (issel) {
+                        a = element("span", tit);
+                        a.style.fontWeight = "bold";
+                        line.appendChild(a);
+                        clickable(a, function () {
+                            if (String(subs.style.display) !== "none") {
+                                subs.style.display = "none";
+                            } else {
+                                if (subs.style.display === "none") {
+                                    animateHeightUnfold(subs);
+                                }
+                                subs.style.display = "block";
+                            }
+                        });
+                    } else {
+                        a = element("a", tit);
+                        a.href = "/" + p.id() + "/" + lang;
+                        line.appendChild(a);
+                        clickable(a, function () {
+                            onPageChanged.fire(p.id() + "/" + lang);
+                        });
+                    }
+                }
                 if (!p) { return; }
+                if (!tit) { return; }
                 if (visited[p.id()]) { return; }
                 visited[p.id()] = 1;
-                if (!p.prop("title_" + lang)) { return; }
-                subs = element("div");
                 p.forEachChild(function (c) {
                     var c_elem = visit(c);
                     if (c_elem) {
@@ -60,27 +88,11 @@
                         subs.appendChild(c_elem);
                     }
                 }, orderFunc);
-                e = element("div", p.prop("title_" + lang));
                 subs.style.display = "none";
-                clickable(e, function () {
-                    if (selected === e) {
-                        if (String(subs.style.display) !== "none") {
-                            subs.style.display = "none";
-                        } else {
-                            if (subs.style.display === "none") {
-                                animateHeightUnfold(subs);
-                            }
-                            subs.style.display = "block";
-                        }
-                    } else {
-                        onPageChanged.fire(p.id() + "/" + lang);
-                    }
-                });
-                outer = element("div");
-                outer.appendChild(e);
                 outer.appendChild(subs);
-                linkById[p.id()] = e;
+                setSelById[p.id()] = setSelected;
                 subsById[p.id()] = subs;
+                setSelected(false);
                 return outer;
             }
             return (function () {

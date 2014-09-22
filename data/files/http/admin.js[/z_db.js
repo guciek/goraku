@@ -2,12 +2,28 @@
 (function () {
     "use strict";
 
-    var lockedCookie = String(document.cookie);
+    function getCookie(n) {
+        n = n + "=";
+        var s = String(document.cookie),
+            p = s.indexOf(n);
+        if (p < 0) { return ""; }
+        s = s.substring(p + n.length);
+        p = s.indexOf(";");
+        if (p >= 0) {
+            s = s.substring(0, p);
+        }
+        return s;
+    }
+
+    var lockedSID = getCookie("SID");
 
     function postRequest(url, data, onresponse) {
-        if (lockedCookie.length < 10) { return; }
-        if (String(document.cookie) !== lockedCookie) {
-            throw "The session has expired!";
+        if (lockedSID.length < 10) {
+            throw "Invalid SID format";
+        }
+        if (String(document.cookie).indexOf("SID=" + lockedSID) < 0) {
+            onresponse("", "The session has expired. You must log in again");
+            return;
         }
         var req = new XMLHttpRequest();
         req.open("POST", url, true);
