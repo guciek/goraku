@@ -9,7 +9,8 @@ export GOPATH=$(shell pwd)
 
 bin/goraku.fcgi: Makefile data/data.go $(GOFILES)
 	@mkdir -p bin src/github.com/guciek
-	@ln -s ../../.. src/github.com/guciek/goraku
+	@test -e src/github.com/guciek/goraku || \
+		ln -s ../../.. src/github.com/guciek/goraku
 	go build -o $@ github.com/guciek/goraku
 	strip $@
 

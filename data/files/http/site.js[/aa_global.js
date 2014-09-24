@@ -74,6 +74,11 @@ var $,
 
     clickable = function (e, action) {
         e.onclick = function (ev) {
+            if (e.href && ev &&
+                    (ev.ctrlKey || ev.metaKey || (ev.button === 1))) {
+                e.target = "_blank";
+                return true;
+            }
             runNow(action);
             if (ev) { ev.preventDefault(); }
             return false;
