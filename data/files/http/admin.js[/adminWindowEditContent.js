@@ -55,10 +55,10 @@ function adminWindowEditContent(edit_pid, edit_lang) {
     }
 
     function textEditor_insertImage(append_html, pid) {
-        var popup = element("div"), inp = adminInputText(), msg = element("div");
+        var popup = element("div"), inp = element("input"), msg = element("div");
+        inp.type = "file";
         popup.appendChild(inp);
         popup.appendChild(msg);
-        inp.type = "file";
         inp.onchange = function () {
             textEditor_insertImage_onFile(
                 append_html,
