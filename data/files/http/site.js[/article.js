@@ -33,9 +33,15 @@
             return;
         }
         href = href.substring(1).split("/");
-        if (href.length !== 2) { markInvalid(a);  return; }
+        if (href.length !== 2) {
+            markInvalid(a);
+            return;
+        }
         linkedpage = getDb().page(href[0]);
-        if (!linkedpage) { markInvalid(a);  return; }
+        if (!linkedpage) {
+            markInvalid(a);
+            return;
+        }
         if (linkedpage.prop("title_" + href[1]).length < 1) {
             markInvalid(a);
             return;
@@ -43,6 +49,31 @@
         clickable(a, function () {
             onPageChanged.fire(href[0] + "/" + href[1]);
         });
+    }
+
+    function upgradeImage(img) {
+        function markInvalid(img) {
+            img.src = "/file/missing_image.png";
+            img.alt = "[missing]";
+        }
+        var p, src = String(img.getAttribute("src"));
+        if (src.substring(0, 6) !== "/file/") {
+            markInvalid(img);
+            return;
+        }
+        src = src.substring(6).split("/");
+        if (src.length !== 2) {
+            markInvalid(img);
+            return;
+        }
+        p = getDb().page(src[0]);
+        if (!p) {
+            markInvalid(img);
+            return;
+        }
+        if (!p.hasFile(src[1])) {
+            markInvalid(img);
+        }
     }
 
     function subPageLi(pid, lang) {
@@ -71,6 +102,13 @@
         var i, links = elem.getElementsByTagName("a");
         for (i = 0; i < links.length; i += 1) {
             upgradeLink(links[i]);
+        }
+    }
+
+    function processImages(elem) {
+        var i, imgs = elem.getElementsByTagName("img");
+        for (i = 0; i < imgs.length; i += 1) {
+            upgradeImage(imgs[i]);
         }
     }
 
@@ -119,6 +157,7 @@
                 }
                 articleContent.innerHTML = r;
                 processLinks(articleContent);
+                processImages(articleContent);
                 onArticleLoaded.fire();
             });
         }
