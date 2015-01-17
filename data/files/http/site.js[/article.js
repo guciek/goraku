@@ -52,11 +52,17 @@
     }
 
     function upgradeImage(img) {
+        if (!img.alt) {
+            img.alt = "[img]";
+        }
         function markInvalid(img) {
             img.src = "/file/missing_image.png";
             img.alt = "[missing]";
         }
         var p, src = String(img.getAttribute("src"));
+        if (src.substring(0, 5) === "data:") {
+            return;
+        }
         if (src.substring(0, 6) !== "/file/") {
             markInvalid(img);
             return;
