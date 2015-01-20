@@ -8,10 +8,6 @@
     color: black;
 }
 
-body {
-    background: #ccc;
-}
-
 p, pre, h1, h2 {
     margin: 0 0 15px 0;
 }
