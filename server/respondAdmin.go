@@ -68,21 +68,26 @@ func cleanUpUnusedImages(p pgman.Page) {
     used := make(map[string]bool)
     p.ForEachFileName(func(f string) {
         if ! strings.HasSuffix(f, ".html") { return }
-        d := string(p.File(f))
-        for {
-            next := strings.Index(d, " src=\"")
-            if next < 0 { break }
-            d = d[next+6:]
-            next = strings.Index(d, "\"")
-            if next < 0 { break }
-            src := d[0:next]
-            d = d[next+1:]
-            next = strings.LastIndex(src, "/")
-            if next >= 0 {
-                src = src[next+1:]
+        extractNames := func(d, attr string) {
+            for {
+                next := strings.Index(d, " " + attr + "=\"/file/")
+                if next < 0 { break }
+                next += len(attr) + 3
+                d = d[next:]
+                next = strings.Index(d, "\"")
+                if next < 0 { break }
+                src := d[0:next]
+                d = d[next+1:]
+                next = strings.LastIndex(src, "/")
+                if next >= 0 {
+                    src = src[next+1:]
+                }
+                used[src] = true
             }
-            used[src] = true
         }
+        htmlCode := string(p.File(f))
+        extractNames(htmlCode, "src")
+        extractNames(htmlCode, "href")
     })
     p.ForEachFileName(func(f string) {
         if ! strings.HasPrefix(f, "img_") { return }

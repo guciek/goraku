@@ -2,9 +2,14 @@
 function adminWindowEditContent(edit_pid, edit_lang) {
     "use strict";
 
-    function textEditor_insertImage_onFile(append_html, pid, inp, onerror) {
+    function textEditor_insertImage_loadData(inp, onerror, ondata) {
         if (inp.files.length < 1) { return; }
-        var fr, fname, fext = "", maxsize = 1024 * 1024;
+        var f = inp.files[0],
+            fr,
+            fname,
+            fext = "",
+            maxsize = 1024 * 1024,
+            binary;
         try {
             fr = new FileReader();
         } catch (err) {
@@ -28,56 +33,156 @@ function adminWindowEditContent(edit_pid, edit_lang) {
         }
         onerror(false, "Loading image...");
         fr.onload = function (ev) {
-            var fn, n = 1, p, data = String(ev.target.result);
-            if (data.length < 1) { return; }
-            if (data.length > maxsize) {
+            binary = String(ev.target.result);
+            if (binary.length < 1) {
+                onerror("Failed to load image");
+                return;
+            }
+            if (binary.length > maxsize) {
                 onerror("File is too large");
                 return;
             }
-            p = getDb().page(pid);
-            if (!p) {
-                onerror("Page not found");
-                return;
-            }
-            fn = "img_" + n + "." + fext;
-            while (p.hasFile(fn)) {
-                n = n + 1;
-                fn = "img_" + n + "." + fext;
-            }
-            onerror(false, "Sending...");
-            p.writeFile(fn, data, "binary", function (err) {
-                onerror(err);
-                if (err) { return; }
-                append_html('<img src="/' + fn + '" />');
-            });
+            fr.onload = function (ev) {
+                if (binary) {
+                    var base64 = String(ev.target.result);
+                    if (base64.substring(0, 11) !== "data:image/") {
+                        onerror("Failed to read image");
+                        return;
+                    }
+                    runNow(ondata, binary, base64, fext);
+                    binary = undefined;
+                }
+            };
+            fr.readAsDataURL(f);
         };
-        fr.readAsBinaryString(inp.files[0]);
+        fr.readAsBinaryString(f);
     }
 
     function textEditor_insertImage(append_html, pid) {
-        var popup = element("div"), inp = element("input"), msg = element("div");
+        var p = getDb().page(pid),
+            popup = element("div"),
+            inp = element("input"),
+            msg = element("div");
         inp.type = "file";
         popup.appendChild(inp);
         popup.appendChild(msg);
-        inp.onchange = function () {
-            textEditor_insertImage_onFile(
-                append_html,
-                pid,
+        if (!p) {
+            inp.style.display = "none";
+            msg.textContent = "Error: Page does not exist";
+            msg.style.color = "#f00";
+            return popup;
+        }
+
+        function doUpload(binary, fext, thumb_jpg_b64, showerror) {
+            var fn, thumb_fn, n = 1;
+            fn = "img_" + n + "." + fext;
+            thumb_fn = "img_" + n + "_t.jpg";
+            while (p.hasFile(fn) || p.hasFile(thumb_fn)) {
+                n = n + 1;
+                fn = "img_" + n + "." + fext;
+                thumb_fn = "img_" + n + "_t.jpg";
+            }
+            function writeBig() {
+                p.writeFile(fn, binary, "binary", function (err) {
+                    if (err) {
+                        showerror(err);
+                        return;
+                    }
+                    if (thumb_jpg_b64) {
+                        append_html('<a href="/file/' + pid + '/' + fn +
+                            '"><img src="/' + thumb_fn + '" /></a>');
+                    } else {
+                        append_html('<img src="/' + fn + '" />');
+                    }
+                    popup.close_window();
+                });
+            }
+            if (thumb_jpg_b64) {
+                p.writeFile(thumb_fn, thumb_jpg_b64, "base64", function (err) {
+                    if (err) {
+                        showerror(err);
+                    } else {
+                        writeBig();
+                    }
+                });
+            } else {
+                writeBig();
+            }
+        }
+
+        function onData(binary, base64, fext) {
+            inp.style.display = "none";
+            msg.style.display = "none";
+            var useThumb = true,
+                thumbPanel = element("div"),
+                thumbEditor,
+                img = element("img");
+            popup.appendChild((function () {
+                var d = element("div"),
+                    cb = element("input"),
+                    label = element("label");
+                cb.type = "checkbox";
+                cb.style.marginRight = "5px";
+                cb.style.verticalAlign = "middle";
+                cb.id = "cb_" + Math.random();
+                label.textContent = "Inline Full Image";
+                label.htmlFor = cb.id;
+                d.appendChild(cb);
+                d.appendChild(label);
+                cb.onchange = runLater(function () {
+                    if (cb.checked) {
+                        useThumb = false;
+                        thumbPanel.style.display = "none";
+                    } else {
+                        useThumb = true;
+                        thumbPanel.style.display = "block";
+                    }
+                });
+                return d;
+            }()));
+            thumbPanel.style.marginTop = "10px";
+            popup.appendChild(thumbPanel);
+            popup.appendChild(adminSaveButton("Upload", function (showerror) {
+                var thumb_data;
+                if (useThumb) {
+                    if (!thumbEditor) {
+                        showerror("Could not parse image");
+                        return;
+                    }
+                    thumb_data = thumbEditor.getBase64JPEG();
+                    if (!thumb_data) {
+                        showerror("Could not encode thumbnail image");
+                        return;
+                    }
+                    doUpload(binary, fext, thumb_data, showerror);
+                } else {
+                    doUpload(binary, fext, undefined, showerror);
+                }
+            }));
+            img.onload = function () {
+                thumbEditor = thumbnailEditor(img);
+                thumbPanel.appendChild(thumbEditor);
+            };
+            img.src = base64;
+        }
+
+        inp.onchange = runLater(function () {
+            textEditor_insertImage_loadData(
                 inp,
                 function (err, info) {
                     inp.style.display = "none";
                     if (err) {
                         msg.textContent = "Error: " + err;
                         msg.style.color = "#f00";
-                    } else if (info) {
+                    } else {
                         msg.textContent = info;
                         msg.style.color = "#555";
-                    } else {
-                        popup.close_window();
                     }
-                }
+                },
+                onData
             );
-        };
+        });
+
         return popup;
     }
 
@@ -206,10 +311,6 @@ function adminWindowEditContent(edit_pid, edit_lang) {
             };
         }());
         function upgradeImage(img) {
-            function changeBorder() {
-                img.style.border = (img.alt === "[zoom]") ?
-                        "3px solid #f00" : "3px solid #00f";
-            }
             img.contentEditable = false;
             img.style.minWidth = "20px";
             img.style.minHeight = "20px";
@@ -217,11 +318,6 @@ function adminWindowEditContent(edit_pid, edit_lang) {
             img.style.maxHeight = "40px";
             img.style.margin = "2px";
             img.style.verticalAlign = "middle";
-            changeBorder();
-            img.onclick = function () {
-                img.alt = (img.alt === "[zoom]") ? "[img]" : "[zoom]";
-                changeBorder();
-            };
         }
         function getCleanHtml(append) {
             var h = editable.innerHTML, imgs, i;

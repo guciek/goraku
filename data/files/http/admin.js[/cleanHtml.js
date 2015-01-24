@@ -61,7 +61,8 @@ function cleanHtml(inputHtml, imgBase) {
 
     function ontag_img(tag) {
         var src = cutbetween(tag, 'src="', '"'),
-            alt = cutbetween(tag, 'alt="', '"');
+            alt = cutbetween(tag, 'alt="', '"'),
+            allow_link = "xxx";
         if (!src) {
             return;
         }
@@ -71,10 +72,16 @@ function cleanHtml(inputHtml, imgBase) {
         if (src.substring(0, 5) !== "data:") {
             src = src.split("/");
             src = src[src.length - 1];
+            if (src.substring(src.length - 6) === "_t.jpg") {
+                allow_link = src.substring(0, src.length - 6) + ".";
+                allow_link = 'a href="' + imgBase + allow_link;
+            }
             src = imgBase + src;
         }
         block.want("p");
-        inline.want("");
+        if (inline.wanted().substring(0, allow_link.length) !== allow_link) {
+            inline.want("");
+        }
         writeWhitespace(" ");
         writeText('<img src="' + src + '" alt="' + alt + '" />');
         writeWhitespace(" ");

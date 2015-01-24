@@ -22,17 +22,22 @@
     function upgradeLink(a) {
         function markInvalid(a) {
             a.style.background = "#f00";
+            a.style.cursor = "default";
             a.onclick = function (ev) {
                 if (ev) { ev.preventDefault(); }
                 return false;
             };
         }
-        var linkedpage, href = String(a.getAttribute("href"));
+        var linkedpage, href = String(a.getAttribute("href")), isfile = false;
         if (href.charAt(0) !== "/") {
             a.target = "_blank";
             return;
         }
         href = href.substring(1).split("/");
+        if (href[0] === "file") {
+            isfile = true;
+            href.splice(0, 1);
+        }
         if (href.length !== 2) {
             markInvalid(a);
             return;
@@ -42,13 +47,19 @@
             markInvalid(a);
             return;
         }
-        if (linkedpage.prop("title_" + href[1]).length < 1) {
-            markInvalid(a);
-            return;
+        if (isfile) {
+            if (!linkedpage.hasFile(href[1])) {
+                markInvalid(a);
+            }
+        } else {
+            if (linkedpage.prop("title_" + href[1]).length < 1) {
+                markInvalid(a);
+                return;
+            }
+            clickable(a, function () {
+                onPageChanged.fire(href[0] + "/" + href[1]);
+            });
         }
-        clickable(a, function () {
-            onPageChanged.fire(href[0] + "/" + href[1]);
-        });
     }
 
     function upgradeImage(img) {
