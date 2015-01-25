@@ -6,7 +6,7 @@ function cleanHtml(inputHtml, imgBase) {
 
     function cutbetween(str, start, end) {
         var p, p2;
-        p = str.indexOf(start, 2);
+        p = str.indexOf(start);
         if (p < 0) { return ""; }
         p += start.length;
         p2 = str.indexOf(end, p);
@@ -62,28 +62,41 @@ function cleanHtml(inputHtml, imgBase) {
     function ontag_img(tag) {
         var src = cutbetween(tag, 'src="', '"'),
             alt = cutbetween(tag, 'alt="', '"'),
-            allow_link = "xxx";
+            linked = "";
         if (!src) {
             return;
         }
-        if (!alt) {
-            alt = "[img]";
+        if (alt && (alt.substring(0, 7) === "[thumb:")) {
+            linked = cutbetween(alt, '[thumb:', ']');
+        }
+        if (!linked) {
+            linked = cutbetween(inline.wanted(), 'a href="', '"').split("/");
+            linked = linked[linked.length - 1];
         }
         if (src.substring(0, 5) !== "data:") {
             src = src.split("/");
             src = src[src.length - 1];
-            if (src.substring(src.length - 6) === "_t.jpg") {
-                allow_link = src.substring(0, src.length - 6) + ".";
-                allow_link = 'a href="' + imgBase + allow_link;
+            if ((src.substring(src.length - 6) !== "_t.jpg") ||
+                    (linked.substring(0, src.length - 5) !==
+                    src.substring(0, src.length - 6) + ".")) {
+                linked = "";
             }
             src = imgBase + src;
+        } else {
+            linked = "";
         }
         block.want("p");
-        if (inline.wanted().substring(0, allow_link.length) !== allow_link) {
-            inline.want("");
-        }
+        inline.want("");
+        inline.close();
         writeWhitespace(" ");
+        if (linked) {
+            inline.want('a href="' + imgBase + linked + '"');
+            alt = "[thumb:" + linked + "]";
+        } else {
+            alt = "[img]";
+        }
         writeText('<img src="' + src + '" alt="' + alt + '" />');
+        inline.want("");
         writeWhitespace(" ");
     }
 
