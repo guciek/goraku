@@ -36,14 +36,11 @@ div#rightcolumn {
 
 div#rightcolumn * {
     font-size: 12px;
+    text-decoration: none;
 }
 
 div#langs {
     margin-bottom: 20px;
-}
-
-div#langs a {
-    text-decoration: none;
 }
 
 div#langs img {
@@ -113,7 +110,6 @@ ul#subs li {
 ul#subs img {
     display: block;
     border: 1px solid #fff;
-    text-decoration: none;
     margin-bottom: 4px;
 }
 
@@ -127,6 +123,7 @@ div#footer {
 div#footer, div#footer * {
     font-size: 11px;
     color: #6f5e50;
+    text-decoration: none;
 }
 
 div#footer span {

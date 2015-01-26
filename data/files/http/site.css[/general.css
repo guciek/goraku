@@ -14,12 +14,11 @@ p, pre, h1, h2 {
 
 a, a * {
     color: #004;
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 a:hover {
     opacity: 0.6;
-    text-decoration: underline;
 }
 
 i {
@@ -28,6 +27,7 @@ i {
 
 img {
     border: none;
+    text-decoration: none;
 }
 
 ul {
