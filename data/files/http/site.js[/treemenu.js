@@ -52,7 +52,7 @@
                     subs = element("div"),
                     tit = p.prop("title_" + lang);
                 function setSelected(issel) {
-                    var a;
+                    var a, link = p.prop("link");
                     line.textContent = "";
                     if (issel) {
                         a = element("span", tit);
@@ -67,6 +67,13 @@
                                 }
                                 subs.style.display = "block";
                             }
+                        });
+                    } else if (link) {
+                        a = element("a", tit);
+                        a.href = link;
+                        line.appendChild(a);
+                        clickable(a, function () {
+                            window.open(link, "_blank");
                         });
                     } else {
                         a = element("a", tit);

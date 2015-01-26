@@ -94,18 +94,26 @@
     }
 
     function subPageLi(pid, lang) {
-        var p, tit, li, a, img;
+        var p, tit, li, a, img, link;
         p = getDb().page(pid);
         if (!p) { return; }
         tit = p.prop("title_" + lang);
         if (tit.length < 1) { return; }
         li = element("li");
         a = element("a");
-        a.href = "/" + pid + "/" + lang;
+        link = p.prop("link");
+        if (link) {
+            a.href = link;
+            clickable(a, function () {
+                window.open(link, "_blank");
+            });
+        } else {
+            a.href = "/" + pid + "/" + lang;
+            clickable(a, function () {
+                onPageChanged.fire(pid + "/" + lang);
+            });
+        }
         li.appendChild(a);
-        clickable(a, function () {
-            onPageChanged.fire(pid + "/" + lang);
-        });
         if (p.hasFile("icon.jpg")) {
             img = element("img");
             img.src = "/file/" + pid + "/icon.jpg";

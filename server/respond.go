@@ -78,7 +78,7 @@ func respond(r Request, perm session.Permissions,
         pm pgman.PageManager) Response {
     if !strings.HasPrefix(r.Path, "/") { r.Path = "/" }
     path := r.Path[1:]
-    if len(path) < 1 { return movedPermanently("/index/en") }
+    if len(path) < 1 { return pageMoved("/index/en", true) }
     if len(r.Body) > 0 { return respondPost(r, perm, pm) }
     if strings.IndexRune(path, '.') >= 0 { return respondFile(r, perm, pm) }
 
@@ -94,6 +94,9 @@ func respond(r Request, perm session.Permissions,
 
     page := pm.ById(pageid)
     if page.Id == nil { return notFound() }
+
+    link := page.Property("link")
+    if len(link) >= 1 { return pageMoved(link, false) }
 
     title := page.Property("title_"+lang)
     if len(title) < 1 { return notFound() }

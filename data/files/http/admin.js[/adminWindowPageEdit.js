@@ -181,15 +181,30 @@ function adminWindowPageEdit(edit_pid) {
         return d;
     }
 
+    function linkProperty(defvalue) {
+        var d = textProperty("Link")(defvalue || "http://");
+        d.isvisible = function (type) {
+            return (type === "link");
+        };
+        d.checkvalue = function () {
+            if (!String(d.value).trim().match(/^http(s?):\/\/.+$/)) {
+                return "Invalid link";
+            }
+        };
+        return d;
+    }
+
     var properties = [];
 
     properties.push([
         "type",
         selectProperty("Page Type", [
             ["", "Normal"],
+            ["link", "External Link"],
             ["tag", "Tag"]
         ])
     ]);
+    properties.push(["link", linkProperty]);
     properties.push(["title_en", titleProperty]);
     properties.push(["title_pl", titleProperty]);
     properties.push([

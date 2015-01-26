@@ -5,9 +5,11 @@
 
 package server
 
-func movedPermanently(url string) Response {
+func pageMoved(url string, permanent bool) Response {
+    code := 302
+    if (permanent) { code = 301 }
     return Response {
-        Code: 301,
+        Code: code,
         Headers: map[string]string {
             "Location": url,
             "Content-Type": "text/html",
