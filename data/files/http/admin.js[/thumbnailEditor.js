@@ -10,12 +10,16 @@ function thumbnailEditor(img) {
         zoom = element("div"),
         canvas = element("canvas"),
         draw = canvas.getContext("2d"),
+        tmp_canvas = element("canvas"),
+        tmp_draw = tmp_canvas.getContext("2d"),
         drag = makeDraggable(canvas);
 
     canvas.style.border = "1px solid black";
     canvas.style.cursor = "move";
     canvas.width = iconSize.x;
     canvas.height = iconSize.y;
+    tmp_canvas.width = iconSize.x * 2;
+    tmp_canvas.height = iconSize.y * 2;
     e.appendChild(element("div", canvas));
     e.appendChild(zoom);
 
@@ -39,7 +43,9 @@ function thumbnailEditor(img) {
                 -Math.round(pos.y - iconSize.y / 2)
             );
         } else {
-            draw.drawImage(
+            tmp_draw.fillStyle = "#fff";
+            tmp_draw.fillRect(0, 0, iconSize.x * 2, iconSize.y * 2);
+            tmp_draw.drawImage(
                 img,
                 pos.x - iconSize.x * scale.cur / 2,
                 pos.y - iconSize.y * scale.cur / 2,
@@ -47,9 +53,10 @@ function thumbnailEditor(img) {
                 iconSize.y * scale.cur,
                 0,
                 0,
-                iconSize.x,
-                iconSize.y
+                iconSize.x * 2,
+                iconSize.y * 2
             );
+            draw.drawImage(tmp_canvas, 0, 0, iconSize.x, iconSize.y);
         }
     }
 
