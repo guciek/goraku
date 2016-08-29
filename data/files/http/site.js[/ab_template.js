@@ -50,27 +50,18 @@
         }
     }
 
-
     function initBrowserEvents() {
         function changePageFromBrowser() {
             onPageChanged.fire(
                 String(window.location.pathname).substring(1),
                 true
             );
+            try {
+                window.scroll(window.history.state.scrollx, window.history.state.scrolly);
+            } catch (ignore) {}
         }
         changePageFromBrowser();
         window.onpopstate = changePageFromBrowser;
-        onPageChanged.add(function (newPath, browserInitiated) {
-            try {
-                window.scroll(0, 0);
-            } catch (ignore) {}
-            if (browserInitiated) { return; }
-            newPath = "/" + newPath;
-            if (String(window.location.pathname) === newPath) { return; }
-            try {
-                window.history.pushState({}, newPath, newPath);
-            } catch (ignore) {}
-        });
     }
 
     function clearContent() {
@@ -102,6 +93,22 @@
         }
         clearContent();
         $("article").appendChild(element("p", "Loading database..."));
+        onPageChanged.add(function (newPath, browserInitiated) {
+            if (browserInitiated) { return; }
+            newPath = "/" + newPath;
+            if (String(window.location.pathname) === newPath) { return; }
+            try {
+                window.history.pushState(
+                    {
+                        scrollx: window.scrollX,
+                        scrolly: window.scrollY
+                    },
+                    newPath,
+                    newPath
+                );
+                window.scroll(0, 0);
+            } catch (ignore) {}
+        });
         onPageChanged.add(onUpdate);
         onDbChanged.add(onUpdate);
         (function () {
